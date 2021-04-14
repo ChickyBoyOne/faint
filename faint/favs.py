@@ -54,8 +54,11 @@ def favs(username, since, until, outfile=None):
             try:
                 last_fav_time = dateparser.parse(soup.select_one("div.midsection span")["title"], settings={"TIMEZONE": "US/Eastern", "TO_TIMEZONE": "US/Central"})
             except TypeError:
-                print(f"User {username} not found!")
-                sys.exit(1)
+                if soup.find("div", id="no-images"):
+                    break
+                else:
+                    print(f"User {username} not found!")
+                    sys.exit(1)
 
             url = base + favs[0]["data-fav-id"] + "/next/"
             
@@ -78,6 +81,11 @@ def favs(username, since, until, outfile=None):
             
             if len(favs) == 1:
                 break
+        
+        if len(all_favs):
+            print()
+
+        print(len(all_favs), "favorite(s) found!")
 
         if outfile:
             json.dump(all_favs, outfile, indent=4)
