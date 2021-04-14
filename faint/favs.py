@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 import sys
 
@@ -37,7 +36,7 @@ def get_cookies() -> "dict[str, str]":
 @click.argument("username")
 @click.option("--since", default="1970-01-01", help="Only save favorites since the beginning of this date (YYYY-MM-DD)")
 @click.option("-o", "--outfile", type=click.File("w"), default="favs.json")
-def main(username, since, outfile):
+def favs(username, since, outfile):
     cookies = get_cookies()
     base = FA_BASE + f"/favorites/{username}/"
     url = base
@@ -77,6 +76,3 @@ def main(username, since, outfile):
             url = base + favs[0]["data-fav-id"] + "/next/"
         
         json.dump(all_favs, outfile, indent=4)
-
-if __name__ == "__main__":
-    main()
