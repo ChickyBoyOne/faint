@@ -34,14 +34,16 @@ def get_cookies() -> "dict[str, str]":
 
 @click.command()
 @click.argument("username")
-@click.option("--since", default="1970-01-01", help="Only save favorites since the beginning of this date (YYYY-MM-DD)")
+@click.option("--since", default="1970-01-01", help="Only save favorites since this date/time")
+@click.option("--until", default="tomorrow", help="Only save favorites until this date/time")
 @click.option("-o", "--outfile", type=click.File("w"))
-def favs(username, since, outfile=None):
+def favs(username, since, until, outfile=None):
     cookies = get_cookies()
     base = FA_BASE + f"/favorites/{username}/"
     url = base
     all_favs = []
     since = dateparser.parse(since)
+    until = dateparser.parse(until)
     
     with httpx.Client(headers=HEADERS, cookies=cookies) as c:
         while True:
@@ -54,9 +56,13 @@ def favs(username, since, outfile=None):
             except TypeError:
                 print(f"User {username} not found!")
                 sys.exit(1)
+
+            url = base + favs[0]["data-fav-id"] + "/next/"
             
             if since > last_fav_time:
                 break
+            elif until < last_fav_time:
+                continue
             
             first = favs[0]
             fav = {
@@ -73,7 +79,5 @@ def favs(username, since, outfile=None):
             if len(favs) == 1:
                 break
 
-            url = base + favs[0]["data-fav-id"] + "/next/"
-        
         if outfile:
             json.dump(all_favs, outfile, indent=4)
