@@ -35,8 +35,8 @@ def get_cookies() -> "dict[str, str]":
 @click.command()
 @click.argument("username")
 @click.option("--since", default="1970-01-01", help="Only save favorites since the beginning of this date (YYYY-MM-DD)")
-@click.option("-o", "--outfile", type=click.File("w"), default="favs.json")
-def favs(username, since, outfile):
+@click.option("-o", "--outfile", type=click.File("w"))
+def favs(username, since, outfile=None):
     cookies = get_cookies()
     base = FA_BASE + f"/favorites/{username}/"
     url = base
@@ -75,4 +75,5 @@ def favs(username, since, outfile):
 
             url = base + favs[0]["data-fav-id"] + "/next/"
         
-        json.dump(all_favs, outfile, indent=4)
+        if outfile:
+            json.dump(all_favs, outfile, indent=4)
