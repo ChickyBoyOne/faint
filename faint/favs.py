@@ -82,10 +82,12 @@ def favs(username, since, until, outfile=None):
             if len(favs) == 1:
                 break
         
-        if len(all_favs):
+        num_fav = len(all_favs)
+        
+        if num_fav:
             print()
 
-        print(len(all_favs), "favorite(s) found!")
+        print(num_fav, f"favorite{'s' if num_fav != 1 else ''} found!")
 
         if outfile:
             json.dump(all_favs, outfile, indent=4)
