@@ -1,8 +1,13 @@
+import functools
 import json
 import logging
 from pathlib import Path
 
 import click_logging
+import dateparser
+
+logger = logging.getLogger(__name__)
+click_logging.basic_config(logger)
 
 COOKIES = ["__cfduid", "a", "b"]
 FA_BASE = "https://www.furaffinity.net"
@@ -26,5 +31,8 @@ def get_cookies() -> "dict[str, str]":
     
     return cookies
 
-logger = logging.getLogger(__name__)
-click_logging.basic_config(logger)
+# TODO: Parse settings page for timezone
+parse_date = functools.partial(dateparser.parse, settings={"TIMEZONE": "US/Eastern"})
+
+def format_date(date: str) -> str:
+    return parse_date(date).strftime("%Y/%m/%d %H:%M")
