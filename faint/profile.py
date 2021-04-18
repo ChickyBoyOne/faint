@@ -1,3 +1,5 @@
+import itertools
+
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
 import httpx
@@ -8,7 +10,7 @@ def get_user_list(body: Tag) -> list[str]:
     if not (table := body.find("table")):
         return []
     
-    return list(map(lambda td: td.get_text(), table.find_all("td")))
+    return [td.get_text() for td in table.find_all("td")]
 
 def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     r = client.get(f"{FA_BASE}/user/{username}/")
@@ -33,5 +35,11 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
             user["watchers"] = get_user_list(body)
         elif label == "Recently Watched":
             user["watched"] = get_user_list(body)
+        elif label == "Stats":
+            user["stats"] = stats = {}
+            lines = itertools.chain.from_iterable(cell.get_text().strip().splitlines() for cell in body.find_all("div", class_="cell"))
+            nums = [int(line.split(": ")[1]) for line in lines]
+            stats["views"], stats["submissions"], stats["favs"], \
+                stats["comments_earned"], stats["comments_made"], stats["journals"] = nums
     
     return user
