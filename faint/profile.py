@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 from bs4.element import Tag
 import httpx
 
-from faint.util import FA_BASE, format_date
+from faint.bbcode import to_bbcode
+from faint.util import FA_BASE, format_date, normalize_url
 
 def get_user_list(body: Tag) -> list[str]:
     if not (table := body.find("table")):
@@ -25,18 +26,27 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     title_parts = user_block.find("span", class_="font-small").get_text().strip().split(" | ")
     user["title"] = None if len(title_parts) == 1 else " | ".join(title_parts[:-1])
     user["joined"] = format_date(title_parts[-1].split(": ")[-1])
-    user["avatar"] = "https:" + soup.find("img", class_="user-nav-avatar")["src"]
+    user["avatar"] = normalize_url(soup.find("img", class_="user-nav-avatar")["src"])
 
-    # TODO: Implement BBCode
-    # https://www.furaffinity.net/journal/833448/
     profile_block = soup.find("div", class_="userpage-profile")
-    user["profile"] = str(profile_block)
+    user["profile"] = to_bbcode(profile_block)
 
     layout = soup.find("div", class_="userpage-layout")
 
     for section in layout.find_all("section"):
         if not (header := section.select_one("div.section-header h2")):
+            comments = []
+
+            for div in section.find_all("div", class_="comment_container"):
+                comments.append({
+                    "name": div.find("div", class_="comment_usernameinline").get_text(),
+                    "avatar": normalize_url(div.find("img", class_="comment_useravatar")["src"]),
+                    "time": format_date(div.find("span", class_="popup_date").get_text()),
+                    "text": to_bbcode(div.find("div", class_="comment_text")),
+                })
+            
             continue
+
         label = header.get_text()
         body = section.find("div", class_="section-body")
 
