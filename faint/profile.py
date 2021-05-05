@@ -40,16 +40,17 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
 
     for section in layout.find_all("section"):
         if not (header := section.select_one("div.section-header h2")):
-            comments = []
+            shouts = []
 
             for div in section.find_all("div", class_="comment_container"):
-                comments.append({
-                    "name": div.find("div", class_="comment_usernameinline").get_text(),
+                shouts.append({
+                    "name": div.find("div", class_="comment_username").get_text(),
                     "avatar": normalize_url(div.find("img", class_="comment_useravatar")["src"]),
                     "time": format_date(div.find("span", class_="popup_date").get_text()),
                     "text": to_bbcode(div.find("div", class_="comment_text")),
                 })
             
+            user["shouts"] = shouts
             continue
 
         label = header.get_text()
