@@ -38,4 +38,4 @@ def format_date(date: str) -> str:
     return parse_date(date).strftime("%Y/%m/%d %H:%M")
 
 def normalize_url(url: str) -> str:
-    return "https" + url
+    return "https:" + url
