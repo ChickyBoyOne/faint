@@ -26,8 +26,6 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     user["status"] = name_block["title"].split(": ")[-1].lower()
     if (img := user_block.find("img")):
         user["special"] = [c for c in img["class"] if c != "inline"][0]
-    else:
-        user["special"] = ""
     title_parts = user_block.find("span", class_="font-small").get_text().strip().split(" | ")
     user["title"] = None if len(title_parts) == 1 else " | ".join(title_parts[:-1])
     user["joined"] = format_date(title_parts[-1].split(": ")[-1])
@@ -40,7 +38,7 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
 
     for section in layout.find_all("section"):
         if not (header := section.select_one("div.section-header h2")):
-            shouts = []
+            user["shouts"] = shouts = []
 
             for div in section.find_all("div", class_="comment_container"):
                 shouts.append({
@@ -50,7 +48,6 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
                     "text": to_bbcode(div.find("div", class_="comment_text")),
                 })
             
-            user["shouts"] = shouts
             continue
 
         label = header.get_text()
