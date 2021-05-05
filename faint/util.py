@@ -39,6 +39,13 @@ parse_date = functools.partial(dateparser.parse, settings={"TIMEZONE": "US/Easte
 def format_date(date: str) -> str:
     return parse_date(date).strftime("%Y/%m/%d %H:%M")
 
+def get_subtitle_num(header: Tag) -> int:
+    for word in header.a.get_text().split("(")[-1].split(")")[0].split():
+        try:
+            return int(word)
+        except ValueError:
+            continue
+
 def normalize_url(url: str) -> str:
     parsed = urlparse(url)
     return urlunparse(ParseResult(
@@ -50,7 +57,7 @@ def normalize_url(url: str) -> str:
         fragment=parsed.fragment,
     ))
 
-def not_class(elem: Tag, bad: str) -> str:
-    for c in elem.get_attribute_list("class"):
+def not_class(tag: Tag, bad: str) -> str:
+    for c in tag.get_attribute_list("class"):
         if c != bad:
             return c

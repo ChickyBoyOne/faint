@@ -5,7 +5,7 @@ from bs4.element import Tag
 import httpx
 
 from faint.bbcode import to_bbcode
-from faint.util import FA_BASE, format_date, normalize_url, not_class
+from faint.util import FA_BASE, format_date, get_subtitle_num, normalize_url, not_class
 
 def get_user_list(body: Tag) -> list[str]:
     if not (table := body.find("table")):
@@ -25,7 +25,11 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
         user["username"] = user["username"][1:]
     user["status"] = name_block["title"].split(": ")[-1].lower()
     if (img := user_block.find("img")):
-        user["special"] = not_class(img, "inline")
+        user["special"] = {
+            "id": not_class(img, "inline").replace("-icon", "").replace("-logo", ""),
+            "image": normalize_url(img["src"]),
+            "title": img["title"],
+        }
     title_parts = user_block.find("span", class_="font-small").get_text().strip().split(" | ")
     user["title"] = None if len(title_parts) == 1 else " | ".join(title_parts[:-1])
     user["joined"] = format_date(title_parts[-1].split(": ")[-1])
@@ -37,7 +41,7 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     layout = soup.find("div", class_="userpage-layout")
 
     for section in layout.find_all("section"):
-        if not (header := section.select_one("div.section-header h2")):
+        if not (header := section.select_one("div.section-header")):
             user["shouts"] = shouts = []
 
             for div in section.find_all("div", class_="comment_container"):
@@ -50,22 +54,38 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
             
             continue
 
-        label = header.get_text()
+        label = header.h2.get_text()
         body = section.find("div", class_="section-body")
 
         if label == "Recent Watchers":
-            user["watchers"] = get_user_list(body)
+            user["watchers"] = {
+                "num": get_subtitle_num(header),
+                "list": get_user_list(body),
+            }
         elif label == "Recently Watched":
-            user["watched"] = get_user_list(body)
+            user["watched"] = {
+                "num": get_subtitle_num(header),
+                "list": get_user_list(body),
+            }
         elif label == "Stats":
             user["stats"] = stats = {}
             lines = itertools.chain.from_iterable(cell.get_text().strip().splitlines() for cell in body.find_all("div", class_="cell"))
             nums = [int(line.split(": ")[-1]) for line in lines]
             stats["views"], stats["submissions"], stats["favs"], \
                 stats["comments_earned"], stats["comments_made"], stats["journals"] = nums
+        elif label == "Recent Journal":
+            link = header.a
+            href = link["href"]
+            user["recent_journal"] = {
+                "id": int(href.split("/")[-1]),
+                "url": normalize_url(href),
+                "comments": get_subtitle_num(header),
+                "title": body.h2.get_text(),
+                "date": format_date(body.find("span", class_="popup_date")["title"]),
+                "text": to_bbcode(body.div),
+            }
         elif label == "Badges":
             user["badges"] = badges = []
-
             for badge in body.find_all("div", class_="badge"):
                 img = badge.img
                 badges.append({
