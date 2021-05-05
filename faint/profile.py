@@ -13,6 +13,16 @@ def get_user_list(body: Tag) -> list[str]:
     
     return [td.get_text() for td in table.find_all("td")]
 
+def get_special(tag: Tag) -> dict[str, str]:
+    if not (img := tag.img):
+        return
+    
+    return {
+        "id": not_class(img, "inline").replace("-icon", "").replace("-logo", ""),
+        "image": normalize_url(img["src"]),
+        "title": img["title"],
+    }
+
 def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     r = client.get(f"{FA_BASE}/user/{username}/")
     soup = BeautifulSoup(r.text, "lxml")
@@ -24,12 +34,8 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     if user["username"][0] in "~!∞":
         user["username"] = user["username"][1:]
     user["status"] = name_block["title"].split(": ")[-1].lower()
-    if (img := user_block.img):
-        user["special"] = {
-            "id": not_class(img, "inline").replace("-icon", "").replace("-logo", ""),
-            "image": normalize_url(img["src"]),
-            "title": img["title"],
-        }
+    if (special := get_special(name_block)):
+        user["special"] = special
     title_parts = user_block.find("span", class_="font-small").get_text().strip().split(" | ")
     user["title"] = None if len(title_parts) == 1 else " | ".join(title_parts[:-1])
     user["joined"] = format_date(title_parts[-1].split(": ")[-1])
@@ -44,13 +50,17 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
         if not (header := section.select_one("div.section-header")):
             user["shouts"] = shouts = []
 
-            for div in section.find_all("div", class_="comment_container"):
-                shouts.append({
-                    "name": div.find("div", class_="comment_username").get_text(),
-                    "avatar": normalize_url(div.find("img", class_="comment_useravatar")["src"]),
-                    "time": format_date(div.find("span", class_="popup_date").get_text()),
-                    "text": to_bbcode(div.find("div", class_="comment_text")),
-                })
+            for container in section.find_all("div", class_="comment_container"):
+                username = container.find("div", class_="comment_username")
+                shout = {
+                    "username": username.get_text(),
+                    "avatar": normalize_url(container.find("img", class_="comment_useravatar")["src"]),
+                    "time": format_date(container.find("span", class_="popup_date").get_text()),
+                    "text": to_bbcode(container.find("div", class_="comment_text")),
+                }
+                if (special := get_special(username)):
+                    shout["special"] = special
+                shouts.append(shout)
             
             continue
 
@@ -81,7 +91,7 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
                 "url": normalize_url(href),
                 "comments": get_subtitle_num(header),
                 "title": body.h2.get_text(),
-                "date": format_date(body.find("span", class_="popup_date")["title"]),
+                "time": format_date(body.find("span", class_="popup_date")["title"]),
                 "text": to_bbcode(body.div),
             }
         elif label == "Badges":
