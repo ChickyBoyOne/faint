@@ -20,9 +20,14 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     user = {}
     user_block = soup.find("div", class_="username")
     name_block = user_block.select_one("h2 span")
-    user["username"] = name_block.get_text().strip()[1:]
+    user["username"] = name_block.get_text().strip()
+    if user["username"][0] in "~!∞":
+        user["username"] = user["username"][1:]
     user["status"] = name_block["title"].split(": ")[-1].lower()
-    user["fa_plus"] = user_block.find("img") is not None
+    if (img := user_block.find("img")):
+        user["special"] = [c for c in img["class"] if c != "inline"][0]
+    else:
+        user["special"] = ""
     title_parts = user_block.find("span", class_="font-small").get_text().strip().split(" | ")
     user["title"] = None if len(title_parts) == 1 else " | ".join(title_parts[:-1])
     user["joined"] = format_date(title_parts[-1].split(": ")[-1])
