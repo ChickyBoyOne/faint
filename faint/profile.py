@@ -5,7 +5,7 @@ from bs4.element import Tag
 import httpx
 
 from faint.bbcode import to_bbcode
-from faint.util import FA_BASE, format_date, normalize_url
+from faint.util import FA_BASE, format_date, normalize_url, not_class
 
 def get_user_list(body: Tag) -> list[str]:
     if not (table := body.find("table")):
@@ -25,7 +25,7 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
         user["username"] = user["username"][1:]
     user["status"] = name_block["title"].split(": ")[-1].lower()
     if (img := user_block.find("img")):
-        user["special"] = [c for c in img["class"] if c != "inline"][0]
+        user["special"] = not_class(img, "inline")
     title_parts = user_block.find("span", class_="font-small").get_text().strip().split(" | ")
     user["title"] = None if len(title_parts) == 1 else " | ".join(title_parts[:-1])
     user["joined"] = format_date(title_parts[-1].split(": ")[-1])
@@ -63,5 +63,16 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
             nums = [int(line.split(": ")[-1]) for line in lines]
             stats["views"], stats["submissions"], stats["favs"], \
                 stats["comments_earned"], stats["comments_made"], stats["journals"] = nums
+        elif label == "Badges":
+            user["badges"] = badges = []
+
+            for badge in body.find_all("div", class_="badge"):
+                img = badge.img
+                badges.append({
+                    "id": int(badge["id"].split("-")[-1]),
+                    "name": not_class(badge, "badge"),
+                    "img": normalize_url(img["src"]),
+                    "title": img["title"],
+                })
     
     return user
