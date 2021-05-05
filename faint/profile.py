@@ -8,7 +8,7 @@ from faint.bbcode import to_bbcode
 from faint.util import FA_BASE, format_date, get_subtitle_num, normalize_url, not_class
 
 def get_user_list(body: Tag) -> list[str]:
-    if not (table := body.find("table")):
+    if not (table := body.table):
         return []
     
     return [td.get_text() for td in table.find_all("td")]
@@ -24,7 +24,7 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     if user["username"][0] in "~!∞":
         user["username"] = user["username"][1:]
     user["status"] = name_block["title"].split(": ")[-1].lower()
-    if (img := user_block.find("img")):
+    if (img := user_block.img):
         user["special"] = {
             "id": not_class(img, "inline").replace("-icon", "").replace("-logo", ""),
             "image": normalize_url(img["src"]),
