@@ -36,9 +36,10 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     user["status"] = name_block["title"].split(": ")[-1].lower()
     if (special := get_special(name_block)):
         user["special"] = special
-    title_parts = user_block.find("span", class_="font-small").get_text().strip().split(" | ")
-    user["title"] = None if len(title_parts) == 1 else " | ".join(title_parts[:-1])
-    user["joined"] = format_date(title_parts[-1].split(": ")[-1])
+    title, _, joined = user_block.find("span", class_="font-small").get_text().strip().rpartition(" | ")
+    if title:
+        user["title"] = title
+    user["joined"] = format_date(joined.split(": ")[-1])
     user["avatar"] = normalize_url(soup.find("img", class_="user-nav-avatar")["src"])
 
     profile_block = soup.find("div", class_="userpage-profile")
