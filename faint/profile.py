@@ -66,7 +66,8 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
             continue
 
         label = header.h2.get_text()
-        body = section.find("div", class_="section-body")
+        bodies = section.find_all("div", class_="section-body")
+        body = bodies[0]
 
         if label == "Recent Watchers":
             user["watchers"] = {
@@ -105,5 +106,15 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
                     "img": normalize_url(img["src"]),
                     "title": img["title"],
                 })
+        elif label == "User Profile":
+            user["profile"] = profile = {}
+
+            if (submission := section.find("div", class_="section-submission")):
+                url = submission.a["href"]
+                profile["submission"] = {
+                    "id": int(url.split("/")[-2]),
+                    "url": normalize_url(url),
+                    "img": normalize_url(submission.img["src"]),
+                }
     
     return user
