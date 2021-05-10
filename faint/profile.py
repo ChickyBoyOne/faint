@@ -116,5 +116,16 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
                     "url": normalize_url(url),
                     "img": normalize_url(submission.img["src"]),
                 }
+            
+            if (contacts := section.find("div", class_="user-contact")):
+                profile["contact_info"] = contact_info = {}
+
+                for item in contacts.find_all("div", class_="user-contact-item"):
+                    site = item.div.div["class"][0].split("-")[-1]
+                    a = item.a
+                    contact_info[site] = {
+                        "username": a.get_text(),
+                        "url": a["href"],
+                    }
     
     return user
