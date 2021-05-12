@@ -1,7 +1,7 @@
 import itertools
 
 from bs4 import BeautifulSoup
-from bs4.element import Tag
+from bs4.element import NavigableString, Tag
 import httpx
 
 from faint.bbcode import to_bbcode
@@ -122,10 +122,15 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
 
                 for item in contacts.find_all("div", class_="user-contact-item"):
                     site = item.div.div["class"][0].split("-")[-1]
-                    a = item.a
-                    contact_info[site] = {
-                        "username": a.get_text(),
-                        "url": a["href"],
-                    }
+                    if (a := item.a):
+                        contact_info[site] = {
+                            "username": a.get_text(),
+                            "url": a["href"],
+                        }
+                    else:
+                        contact_info[site] = {
+                            "id": [c for c in item.find("div", class_="user-contact-user-info").contents \
+                                    if type(c) is NavigableString][0].strip(),
+                        }
     
     return user
