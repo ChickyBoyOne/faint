@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import ParseResult, urlparse, urlunparse
 
 from bs4 import Tag
+from bs4.element import NavigableString
 import click_logging
 import dateparser
 
@@ -38,6 +39,9 @@ parse_date = functools.partial(dateparser.parse, settings={"TIMEZONE": "US/Easte
 
 def format_date(date: str) -> str:
     return parse_date(date).strftime("%Y/%m/%d %H:%M")
+
+def get_direct_text(tag: Tag) -> str:
+    return [c for c in reversed(tag.contents) if type(c) is NavigableString][0].strip()
 
 def get_subtitle_num(header: Tag) -> int:
     for word in header.a.get_text().split("(")[-1].split(")")[0].split():

@@ -5,7 +5,8 @@ from bs4.element import NavigableString, Tag
 import httpx
 
 from faint.bbcode import to_bbcode
-from faint.util import FA_BASE, format_date, get_subtitle_num, normalize_url, not_class
+from faint.util import FA_BASE, format_date, get_direct_text, get_subtitle_num, \
+    normalize_url, not_class
 
 def get_user_list(body: Tag) -> list[str]:
     if not (table := body.table):
@@ -59,15 +60,13 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
 
             for container in section.find_all("div", class_="comment_container"):
                 username = container.find("div", class_="comment_username")
-                shout = {
+                shouts.append({
                     "username": username.get_text(),
+                    "special": special if (special := get_special(username)) else None,
                     "avatar": normalize_url(container.find("img", class_="comment_useravatar")["src"]),
                     "time": format_date(container.find("span", class_="popup_date").get_text()),
                     "text": to_bbcode(container.find("div", class_="comment_text")),
-                }
-                if (special := get_special(username)):
-                    shout["special"] = special
-                shouts.append(shout)
+                })
             
             continue
 
@@ -115,7 +114,8 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
         elif label == "User Profile":
             user["info"] = info = {
                 "submission": None,
-
+                "questions": [],
+                "contact_info": (contact_info := []),
             }
 
             if (submission := section.find("div", class_="section-submission")):
@@ -126,21 +126,28 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
                     "img": normalize_url(submission.img["src"]),
                 }
             
+            rows = section.find_all("div", class_="table-row")
+            info["trades"], info["commissions"] = [get_direct_text(row) == "Yes" for row in rows[:2]]
+            for row in rows[2:]:
+                info["questions"].append({
+                    "question": (question := row.strong.get_text()),
+                    "answer": to_bbcode(row) if question == "Favorite Artists" else get_direct_text(row),
+                })
+            
             if (contacts := section.find("div", class_="user-contact")):
-                info["contact_info"] = contact_info = {}
-
                 for item in contacts.find_all("div", class_="user-contact-item"):
                     site = item.div.div["class"][0].split("-")[-1]
                     if (a := item.a):
-                        contact_info[site] = {
+                        contact_info.append({
+                            "site": site,
                             "id": a.get_text(),
                             "url": a["href"],
-                        }
+                        })
                     else:
-                        contact_info[site] = {
-                            "id": [c for c in item.find("div", class_="user-contact-user-info").contents \
-                                    if type(c) is NavigableString][0].strip(),
+                        contact_info.append({
+                            "site": site,
+                            "id": get_direct_text(item.find("div", class_="user-contact-user-info")),
                             "url": None,
-                        }
+                        })
     
     return user
