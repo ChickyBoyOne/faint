@@ -27,18 +27,24 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     r = client.get(f"{FA_BASE}/user/{username}/")
     soup = BeautifulSoup(r.text, "lxml")
 
-    user = {}
+    user = {
+        "shouts": [],
+        "watchers": {},
+        "watched": {},
+        "stats": {},
+        "recent_journal": {},
+        "badges": [],
+        "info": {},
+    }
     user_block = soup.find("div", class_="username")
     name_block = user_block.select_one("h2 span")
     user["username"] = name_block.get_text().strip()
     if user["username"][0] in "~!∞":
         user["username"] = user["username"][1:]
     user["status"] = name_block["title"].split(": ")[-1].lower()
-    if (special := get_special(name_block)):
-        user["special"] = special
+    user["special"] = special if (special := get_special(name_block)) else None
     title, _, joined = user_block.find("span", class_="font-small").get_text().strip().rpartition(" | ")
-    if title:
-        user["title"] = title
+    user["title"] = title if title else None
     user["joined"] = format_date(joined.split(": ")[-1])
     user["avatar"] = normalize_url(soup.find("img", class_="user-nav-avatar")["src"])
 
@@ -72,12 +78,12 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
         if label == "Recent Watchers":
             user["watchers"] = {
                 "num": get_subtitle_num(header),
-                "list": get_user_list(body),
+                "recent": get_user_list(body),
             }
         elif label == "Recently Watched":
             user["watched"] = {
                 "num": get_subtitle_num(header),
-                "list": get_user_list(body),
+                "recent": get_user_list(body),
             }
         elif label == "Stats":
             user["stats"] = stats = {}
@@ -107,30 +113,31 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
                     "title": img["title"],
                 })
         elif label == "User Profile":
-            user["profile"] = profile = {}
+            user["info"] = info = {}
 
             if (submission := section.find("div", class_="section-submission")):
                 url = submission.a["href"]
-                profile["submission"] = {
+                info["submission"] = {
                     "id": int(url.split("/")[-2]),
                     "url": normalize_url(url),
                     "img": normalize_url(submission.img["src"]),
                 }
             
             if (contacts := section.find("div", class_="user-contact")):
-                profile["contact_info"] = contact_info = {}
+                info["contact_info"] = contact_info = {}
 
                 for item in contacts.find_all("div", class_="user-contact-item"):
                     site = item.div.div["class"][0].split("-")[-1]
                     if (a := item.a):
                         contact_info[site] = {
-                            "username": a.get_text(),
+                            "id": a.get_text(),
                             "url": a["href"],
                         }
                     else:
                         contact_info[site] = {
                             "id": [c for c in item.find("div", class_="user-contact-user-info").contents \
                                     if type(c) is NavigableString][0].strip(),
+                            "url": None,
                         }
     
     return user
