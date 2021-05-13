@@ -1,11 +1,13 @@
 import itertools
+from typing import Optional
 
 from bs4 import BeautifulSoup
-from bs4.element import NavigableString, Tag
+from bs4.element import Tag
 import httpx
 
-from faint.bbcode import to_bbcode
-from faint.util import FA_BASE, format_date, get_direct_text, get_subtitle_num, \
+from .bbcode import to_bbcode
+from .data import EmbeddedUser
+from .util import FA_BASE, format_date, get_direct_text, get_subtitle_num, \
     normalize_url, not_class
 
 def get_user_list(body: Tag) -> list[str]:
@@ -14,9 +16,9 @@ def get_user_list(body: Tag) -> list[str]:
     
     return [td.get_text() for td in table.find_all("td")]
 
-def get_special(tag: Tag) -> dict[str, str]:
+def get_special(tag: Tag) -> Optional[dict[str, str]]:
     if not (img := tag.img):
-        return
+        return None
     
     return {
         "id": not_class(img, "inline").replace("-icon", "").replace("-logo", ""),
@@ -43,7 +45,7 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
     if user["username"][0] in "~!∞":
         user["username"] = user["username"][1:]
     user["status"] = name_block["title"].split(": ")[-1].lower()
-    user["special"] = special if (special := get_special(name_block)) else None
+    user["special"] = get_special(name_block)
     title, _, joined = user_block.find("span", class_="font-small").get_text().strip().rpartition(" | ")
     user["title"] = title if title else None
     user["joined"] = format_date(joined.split(": ")[-1])
@@ -61,9 +63,11 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
             for container in section.find_all("div", class_="comment_container"):
                 username = container.find("div", class_="comment_username")
                 shouts.append({
-                    "username": username.get_text(),
-                    "special": special if (special := get_special(username)) else None,
-                    "avatar": normalize_url(container.find("img", class_="comment_useravatar")["src"]),
+                    "user": EmbeddedUser(
+                        username=username.get_text(),
+                        special=get_special(username),
+                        avatar=normalize_url(container.find("img", class_="comment_useravatar")["src"]),
+                    ).dict(),
                     "time": format_date(container.find("span", class_="popup_date").get_text()),
                     "text": to_bbcode(container.find("div", class_="comment_text")),
                 })
