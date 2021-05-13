@@ -32,7 +32,7 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
         "watchers": {},
         "watched": {},
         "stats": {},
-        "recent_journal": {},
+        "recent_journal": None,
         "badges": [],
         "info": {},
     }
@@ -113,7 +113,10 @@ def get_profile(client: httpx.Client, username: str) -> dict[str, str]:
                     "title": img["title"],
                 })
         elif label == "User Profile":
-            user["info"] = info = {}
+            user["info"] = info = {
+                "submission": None,
+
+            }
 
             if (submission := section.find("div", class_="section-submission")):
                 url = submission.a["href"]
