@@ -9,6 +9,22 @@ class Special(BaseModel):
     img: str
     title: str
 
+class Rating(Enum):
+    GENERAL = "general"
+    MATURE = "mature"
+    ADULT = "adult"
+
+class GallerySubmission(BaseModel):
+    id: int
+    url: HttpUrl
+    img: HttpUrl
+    width: float
+    height: float
+    title: str
+    username: str
+    time: str
+    rating: Rating
+
 class WatchInfo(BaseModel):
     num: int
     recent: list[str]
@@ -21,7 +37,7 @@ class Stats(BaseModel):
     comments_made: int
     journals: int
 
-class EmbeddedJournal(BaseModel):
+class ProfileJournal(BaseModel):
     id: int
     url: HttpUrl
     comments: int
@@ -35,7 +51,7 @@ class Badge(BaseModel):
     img: HttpUrl
     title: str
 
-class EmbeddedSubmission(BaseModel):
+class ProfileSubmission(BaseModel):
     id: int
     url: HttpUrl
     img: str
@@ -51,7 +67,7 @@ class Contact(BaseModel):
     url: Optional[str]
 
 class ProfileInfo(BaseModel):
-    submission: Optional[EmbeddedSubmission]
+    submission: Optional[ProfileSubmission]
     trades: bool = False
     commissions: bool = False
     questions: list[Question] = []
@@ -73,18 +89,15 @@ class UserProfile(BaseModel):
     avatar: str
     profile: str
 
+    gallery: list[GallerySubmission] = []
+    favorites: list[GallerySubmission] = []
     watchers: Optional[WatchInfo]
     watched: Optional[WatchInfo]
     stats: Optional[Stats]
-    journal: Optional[EmbeddedJournal]
+    journal: Optional[ProfileJournal]
     badges: list[Badge] = []
     info: ProfileInfo = ProfileInfo()
     shouts: list[Shout] = []
-
-class Rating(Enum):
-    GENERAL = "general"
-    MATURE = "mature"
-    ADULT = "adult"
 
 class Favorite(BaseModel):
     sid: int

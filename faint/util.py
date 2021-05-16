@@ -37,6 +37,9 @@ def get_cookies() -> "dict[str, str]":
 # TODO: Parse settings page for timezone
 parse_date = functools.partial(dateparser.parse, settings={"TIMEZONE": "US/Eastern"})
 
+def cleave(s: str) -> str:
+    return s.split("-")[-1]
+
 def format_date(date: str) -> str:
     return parse_date(date).strftime("%Y/%m/%d %H:%M")
 

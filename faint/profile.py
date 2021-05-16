@@ -1,4 +1,6 @@
+from html import unescape
 import itertools
+import json
 from typing import Optional
 
 from bs4 import BeautifulSoup
@@ -6,16 +8,10 @@ from bs4.element import Tag
 import httpx
 
 from .bbcode import to_bbcode
-from .data import Badge, Contact, EmbeddedJournal, EmbeddedSubmission, Question, \
+from .data import Badge, Contact, GallerySubmission, ProfileJournal, ProfileSubmission, Question, \
     Shout, Special, Stats, UserProfile, WatchInfo
-from .util import FA_BASE, format_date, get_direct_text, get_subtitle_num, \
+from .util import cleave, FA_BASE, format_date, get_direct_text, get_subtitle_num, \
     normalize_url, not_class
-
-def get_user_list(body: Tag) -> list[str]:
-    if not (table := body.table):
-        return []
-    
-    return [td.get_text() for td in table.find_all("td")]
 
 def get_special(tag: Tag) -> Optional[Special]:
     if not (img := tag.img):
@@ -26,6 +22,33 @@ def get_special(tag: Tag) -> Optional[Special]:
         img=normalize_url(img["src"]),
         title=img["title"],
     )
+
+def get_gallery_submissions(section: Tag, submission_data: dict[str, str]) -> list[GallerySubmission]:
+    submissions = []
+
+    for figure in section.find_all("figure"):
+        sid = cleave(figure["id"])
+        data = submission_data[sid]
+        img = figure.img
+        submissions.append(GallerySubmission(
+            id=int(sid),
+            url=normalize_url(figure.a["href"]),
+            img=normalize_url(img["src"]),
+            width=float(img["data-width"]),
+            height=float(img["data-height"]),
+            title=unescape(data["title"]),
+            username=data["username"],
+            time=format_date(BeautifulSoup(data["html_date"], "lxml").span["title"]),
+            rating=data["icon_rating"],
+        ))
+    
+    return submissions
+
+def get_user_list(body: Tag) -> list[str]:
+    if not (table := body.table):
+        return []
+    
+    return [td.get_text() for td in table.find_all("td")]
 
 def get_profile(client: httpx.Client, username: str) -> UserProfile:
     r = client.get(f"{FA_BASE}/user/{username}/")
@@ -54,7 +77,11 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
         profile=profile,
     )
 
-    for section in soup.find("div", class_="userpage-layout").find_all("section"):
+    script = soup.select_one("div#site-content > script").contents[0]
+    submission_line = [line for line in script.splitlines() if "submission_data" in line][0]
+    submission_data = json.loads(submission_line.partition(" = ")[2][:-1])
+
+    for section in soup.select("section.userpage-left-column, section.userpage-right-column"):
         if not (header := section.select_one("div.section-header")):
             for container in section.find_all("div", class_="comment_container"):
                 username = container.find("div", class_="comment_username")
@@ -71,8 +98,14 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
         label = header.h2.get_text()
         bodies = section.find_all("div", class_="section-body")
         body = bodies[0]
-
-        if label == "Recent Watchers":
+        
+        if label == "Featured Submission":
+            pass
+        elif label == "Gallery":
+            user.gallery = get_gallery_submissions(section, submission_data)
+        elif label == "Favorites":
+            user.favorites = get_gallery_submissions(section, submission_data)
+        elif label == "Recent Watchers":
             user.watchers = WatchInfo(
                 num=get_subtitle_num(header),
                 recent=get_user_list(body),
@@ -89,7 +122,7 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
         elif label == "Recent Journal":
             link = header.a
             href = link["href"]
-            user.journal = EmbeddedJournal(
+            user.journal = ProfileJournal(
                 id=int(href.split("/")[-1]),
                 url=normalize_url(href),
                 comments=get_subtitle_num(header),
@@ -101,7 +134,7 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
             for badge in body.find_all("div", class_="badge"):
                 img = badge.img
                 user.badges.append(Badge(
-                    id=int(badge["id"].split("-")[-1]),
+                    id=int(cleave(badge["id"])),
                     name=not_class(badge, "badge"),
                     img=normalize_url(img["src"]),
                     title=img["title"],
@@ -111,7 +144,7 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
 
             if (submission := section.find("div", class_="section-submission")):
                 url = submission.a["href"]
-                info.submission = EmbeddedSubmission(
+                info.submission = ProfileSubmission(
                     id=int(url.split("/")[-2]),
                     url=normalize_url(url),
                     img=normalize_url(submission.img["src"]),
@@ -130,7 +163,7 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
             
             if (contacts := section.find("div", class_="user-contact")):
                 for item in contacts.find_all("div", class_="user-contact-item"):
-                    site = item.div.div["class"][0].split("-")[-1]
+                    site = cleave(item.div.div["class"][0])
                     if (a := item.a):
                         info.contacts.append(Contact(
                             site=site,
