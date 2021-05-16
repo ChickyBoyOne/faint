@@ -5,17 +5,18 @@ from bs4 import BeautifulSoup
 import dateparser
 import httpx
 
-from faint.util import FA_BASE
+from .data import Favorite, Rating
+from .util import FA_BASE, normalize_url, not_class
 
-def get_favs(client: httpx.Client, username: str, since: datetime, until: datetime) -> list[dict]:
+def get_favs(client: httpx.Client, username: str, since: datetime, until: datetime) -> list[Favorite]:
     base = f"{FA_BASE}/favorites/{username}/"
     url = base
-    all_favs = []
+    favs = []
     
     while True:
         favs_page = client.get(url)
         soup = BeautifulSoup(favs_page.text, "lxml")
-        favs = soup.select("figure[data-fav-id]")
+        page_favs = soup.select("figure[data-fav-id]")
 
         try:
             last_fav_time = dateparser.parse(soup.select_one("div.midsection span")["title"], settings={"TIMEZONE": "US/Eastern", "TO_TIMEZONE": "US/Central"})
@@ -26,33 +27,24 @@ def get_favs(client: httpx.Client, username: str, since: datetime, until: dateti
                 print(f"User {username} not found!")
                 sys.exit(1)
 
-        url = base + favs[0]["data-fav-id"] + "/next/"
+        url = base + page_favs[0]["data-fav-id"] + "/next/"
         
         if since > last_fav_time:
             break
         elif until < last_fav_time:
             continue
         
-        first = favs[0]
-        fav = {
-            "sid": first["id"].replace("sid-", ""),
-            "adult": "r-adult" in first["class"],
-            "user": first["data-user"].replace("u-", ""),
-            "fav_id": first["data-fav-id"],
-            "fav_time": last_fav_time.strftime("%Y/%m/%d %H:%M"),
-            "url": FA_BASE + first.find("a")["href"],
-        }
-        all_favs.append(fav)
-        print(fav["fav_time"], fav["url"], f"({fav['user']})")
+        first = page_favs[0]
+        favs.append(Favorite(
+            sid=int(first["id"].replace("sid-", "")),
+            rating=not_class(first, "t-image"),
+            username=first["data-user"].replace("u-", ""),
+            id=first["data-fav-id"],
+            time=last_fav_time.strftime("%Y/%m/%d %H:%M"),
+            url=normalize_url(first.find("a")["href"]),
+        ))
         
-        if len(favs) == 1:
+        if len(page_favs) == 1:
             break
-        
-    num_fav = len(all_favs)
     
-    if num_fav:
-        print()
-
-    print(num_fav, f"favorite{'s' if num_fav != 1 else ''} found!")
-    
-    return all_favs
+    return favs

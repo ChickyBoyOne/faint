@@ -6,6 +6,7 @@ import click_logging
 import dateparser
 import httpx
 
+from faint.data import User
 from faint.favs import get_favs
 from faint.profile import get_profile
 from faint.util import get_cookies, logger
@@ -34,14 +35,14 @@ def scrape_user(username: str, profile=False, favs=False, since_str="1970-01-01"
             logger.error(f"{until_str} is not a valid date/time!")
             sys.exit(1)
         
-        user = {}
+        user = User()
         
         if profile:
-            user["profile"] = get_profile(client, username)
+            user.profile = get_profile(client, username)
         if favs:
-            user["favs"] = get_favs(client, username, since=since, until=until)
-
-    json.dump(user, outfile, indent=4)
+            user.favs = get_favs(client, username, since=since, until=until)
+    
+    outfile.write(user.json(indent=4))
 
 if __name__ == "__main__":
     scrape_user()
