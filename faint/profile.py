@@ -54,9 +54,7 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
         profile=profile,
     )
 
-    layout = soup.find("div", class_="userpage-layout")
-
-    for section in layout.find_all("section"):
+    for section in soup.find("div", class_="userpage-layout").find_all("section"):
         if not (header := section.select_one("div.section-header")):
             for container in section.find_all("div", class_="comment_container"):
                 username = container.find("div", class_="comment_username")
@@ -124,7 +122,10 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
             for row in rows[2:]:
                 info.questions.append(Question(
                     question=(question := row.strong.get_text()),
-                    answer=to_bbcode(row) if question == "Favorite Artists" else get_direct_text(row),
+                    answer=to_bbcode(row) if question in [
+                        "Favorite Artists",
+                        "Favorite Site",
+                    ] else get_direct_text(row),
                 ))
             
             if (contacts := section.find("div", class_="user-contact")):
