@@ -31,11 +31,11 @@ def get_gallery_submissions(section: Tag, submission_data: dict[str, str]) -> li
         data = submission_data[sid]
         img = figure.img
         submissions.append(GallerySubmission(
-            id=int(sid),
+            id=sid,
             url=normalize_url(figure.a["href"]),
             img=normalize_url(img["src"]),
-            width=float(img["data-width"]),
-            height=float(img["data-height"]),
+            width=img["data-width"],
+            height=img["data-height"],
             title=unescape(data["title"]),
             username=data["username"],
             time=format_date(BeautifulSoup(data["html_date"], "lxml").span["title"]),
@@ -103,7 +103,7 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
             a = body.h2.a
             href = a["href"]
             user.submission = ProfileSubmission(
-                id=int(href.split("/")[-2]),
+                id=href.split("/")[-2],
                 url=normalize_url(href),
                 img=normalize_url(body.img["src"]),
                 title=a.get_text(),
@@ -131,7 +131,7 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
             link = header.a
             href = link["href"]
             user.journal = ProfileJournal(
-                id=int(href.split("/")[-1]),
+                id=href.split("/")[-1],
                 url=normalize_url(href),
                 comments=get_subtitle_num(header),
                 title=body.h2.get_text(),
@@ -142,7 +142,7 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
             for badge in body.find_all("div", class_="badge"):
                 img = badge.img
                 user.badges.append(Badge(
-                    id=int(cleave(badge["id"])),
+                    id=cleave(badge["id"]),
                     name=not_class(badge, "badge"),
                     img=normalize_url(img["src"]),
                     title=img["title"],
@@ -153,7 +153,7 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
             if (submission := section.find("div", class_="section-submission")):
                 url = submission.a["href"]
                 info.submission = ProfileSubmission(
-                    id=int(url.split("/")[-2]),
+                    id=url.split("/")[-2],
                     url=normalize_url(url),
                     img=normalize_url(submission.img["src"]),
                     # Profile IDs must be of general rating: https://forums.furaffinity.net/threads/furaffinity-profile-id-photo-disabled.1623882/post-5664357
