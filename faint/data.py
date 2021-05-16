@@ -6,13 +6,20 @@ from pydantic.networks import AnyHttpUrl
 
 class Special(BaseModel):
     id: str
-    img: str
+    img: HttpUrl
     title: str
 
 class Rating(Enum):
     GENERAL = "general"
     MATURE = "mature"
     ADULT = "adult"
+
+class ProfileSubmission(BaseModel):
+    id: int
+    url: HttpUrl
+    img: HttpUrl
+    title: Optional[str]
+    rating: Rating
 
 class GallerySubmission(BaseModel):
     id: int
@@ -51,11 +58,6 @@ class Badge(BaseModel):
     img: HttpUrl
     title: str
 
-class ProfileSubmission(BaseModel):
-    id: int
-    url: HttpUrl
-    img: str
-
 class Question(BaseModel):
     question: str
     answer: str
@@ -89,6 +91,7 @@ class UserProfile(BaseModel):
     avatar: str
     profile: str
 
+    submission: Optional[ProfileSubmission]
     gallery: list[GallerySubmission] = []
     favorites: list[GallerySubmission] = []
     watchers: Optional[WatchInfo]

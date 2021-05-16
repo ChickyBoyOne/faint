@@ -9,7 +9,7 @@ import httpx
 
 from .bbcode import to_bbcode
 from .data import Badge, Contact, GallerySubmission, ProfileJournal, ProfileSubmission, Question, \
-    Shout, Special, Stats, UserProfile, WatchInfo
+    Rating, Shout, Special, Stats, UserProfile, WatchInfo
 from .util import cleave, FA_BASE, format_date, get_direct_text, get_subtitle_num, \
     normalize_url, not_class
 
@@ -100,7 +100,15 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
         body = bodies[0]
         
         if label == "Featured Submission":
-            pass
+            a = body.h2.a
+            href = a["href"]
+            user.submission = ProfileSubmission(
+                id=int(href.split("/")[-2]),
+                url=normalize_url(href),
+                img=normalize_url(body.img["src"]),
+                title=a.get_text(),
+                rating=cleave(body.a["class"][0]),
+            )
         elif label == "Gallery":
             user.gallery = get_gallery_submissions(section, submission_data)
         elif label == "Favorites":
@@ -148,6 +156,8 @@ def get_profile(client: httpx.Client, username: str) -> UserProfile:
                     id=int(url.split("/")[-2]),
                     url=normalize_url(url),
                     img=normalize_url(submission.img["src"]),
+                    # Profile IDs must be of general rating: https://forums.furaffinity.net/threads/furaffinity-profile-id-photo-disabled.1623882/post-5664357
+                    rating=Rating.GENERAL,
                 )
             
             rows = section.find_all("div", class_="table-row")
