@@ -3,12 +3,12 @@ import sys
 
 from bs4 import BeautifulSoup
 import dateparser
-import httpx
+from httpx import Client
 
 from .data import Favorite
 from .util import FA_BASE, cleave, normalize_url, not_class
 
-def get_favs(client: httpx.Client, username: str, since: datetime, until: datetime) -> list[Favorite]:
+def get_favs(client: Client, username: str, since: datetime, until: datetime) -> list[Favorite]:
     base = f"{FA_BASE}/favorites/{username}/"
     url = base
     favs = []

@@ -1,5 +1,6 @@
-from enum import Enum
-from typing import Optional
+from __future__ import annotations
+from enum import Enum, IntEnum
+from typing import Optional, Union
 
 from pydantic import BaseModel, HttpUrl
 from pydantic.networks import AnyHttpUrl
@@ -102,6 +103,20 @@ class UserProfile(BaseModel):
     info: ProfileInfo = ProfileInfo()
     shouts: list[Shout] = []
 
+class FolderType(IntEnum):
+    SUBMISSIONS = 0
+    FOLDERS = 1
+
+class Submission(BaseModel):
+    pass
+
+class Folder(BaseModel):
+    type: FolderType
+    contents: list[Union[Submission, Folder]] = []
+
+class Gallery(BaseModel):
+    folders: list[Folder] = []
+
 class Favorite(BaseModel):
     sid: int
     rating: Rating
@@ -112,4 +127,5 @@ class Favorite(BaseModel):
 
 class User(BaseModel):
     profile: Optional[UserProfile]
+    gallery: Optional[Gallery]
     favs: list[Favorite] = []

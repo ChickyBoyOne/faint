@@ -5,7 +5,7 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-import httpx
+from httpx import Client
 
 from .bbcode import to_bbcode
 from .data import Badge, Contact, GallerySubmission, ProfileJournal, ProfileSubmission, Question, \
@@ -50,7 +50,7 @@ def get_user_list(body: Tag) -> list[str]:
     
     return [td.get_text() for td in table.find_all("td")]
 
-def get_profile(client: httpx.Client, username: str) -> UserProfile:
+def get_profile(client: Client, username: str) -> UserProfile:
     r = client.get(f"{FA_BASE}/user/{username}/")
     soup = BeautifulSoup(r.text, "lxml")
 
