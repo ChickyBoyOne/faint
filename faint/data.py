@@ -33,6 +33,24 @@ class GallerySubmission(BaseModel):
     time: str
     rating: Rating
 
+class Supporter(BaseModel):
+    username: str
+    url: HttpUrl
+    avatar: HttpUrl
+
+class ShinyDonation(BaseModel):
+    supporter: Supporter
+    message: Optional[str]
+
+class Shinies(BaseModel):
+    # Singular descriptor is not necessarily present
+    singular: Optional[str]
+    plural: str
+    top: list[Supporter] = []
+    recent: list[ShinyDonation] = []
+    price: int = 5
+    messages: bool = True
+
 class WatchInfo(BaseModel):
     num: int
     recent: list[str]
@@ -95,6 +113,7 @@ class UserProfile(BaseModel):
     submission: Optional[ProfileSubmission]
     gallery: list[GallerySubmission] = []
     favorites: list[GallerySubmission] = []
+    shinies: Optional[Shinies]
     watchers: Optional[WatchInfo]
     watched: Optional[WatchInfo]
     stats: Optional[Stats]

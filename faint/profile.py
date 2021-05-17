@@ -9,7 +9,7 @@ from httpx import Client
 
 from .bbcode import to_bbcode
 from .data import Badge, Contact, GallerySubmission, ProfileJournal, ProfileSubmission, Question, \
-    Rating, Shout, Special, Stats, UserProfile, WatchInfo
+    Rating, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
 from .util import cleave, FA_BASE, format_date, get_direct_text, get_subtitle_num, \
     normalize_url, not_class
 
@@ -78,7 +78,7 @@ def get_profile(client: Client, username: str) -> UserProfile:
     )
 
     script = soup.select_one("div#site-content > script").contents[0]
-    submission_line = [line for line in script.splitlines() if "submission_data" in line][0]
+    submission_line = next(l for l in script.splitlines() if "submission_data" in l)
     submission_data = json.loads(submission_line.partition(" = ")[2][:-1])
 
     for section in soup.select("section.userpage-left-column, section.userpage-right-column"):
@@ -113,6 +113,35 @@ def get_profile(client: Client, username: str) -> UserProfile:
             user.gallery = get_gallery_submissions(section, submission_data)
         elif label == "Favorites":
             user.favorites = get_gallery_submissions(section, submission_data)
+        elif "'s Top Supporters" in label:
+            top = [Supporter(
+                    username=(img := div.img)["alt"],
+                    url=normalize_url(div.a["href"]),
+                    avatar=normalize_url(img["src"])
+                ) for div in body.div.find_all("div", recursive=False)]
+            plural = body.h2.get_text().split()[-1]
+            user.shinies = shinies = Shinies(plural=plural, top=top)
+            
+            for donation in body.find_all("div", class_="comment_container"):
+                shinies.recent.append(ShinyDonation(
+                    supporter=Supporter(
+                        username=(img := donation.img)["alt"],
+                        url=normalize_url(donation.a["href"]),
+                        avatar=normalize_url(img["src"]),
+                    ),
+                ))
+
+                if len(parts := get_direct_text(donation.find("div", class_="name")).split()) == 5:
+                    shinies.singular = parts[2]
+
+                if (message := donation.find("div", class_="comment_text").get_text(strip=True)):
+                    message = message[1:][:-1]
+                    shinies.recent[-1].message = message
+        elif "Send " in label:
+            script = body.script.contents[0]
+            cost_line = next(l for l in script.splitlines() if "shinies_cost" in l)
+            shinies.price = cost_line.partition(" = ")[2][:-1]
+            shinies.messages = body.find("div", id="shinies-input") is not None
         elif label == "Recent Watchers":
             user.watchers = WatchInfo(
                 num=get_subtitle_num(header),
