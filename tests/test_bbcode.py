@@ -6,7 +6,7 @@ from bs4.element import Tag
 from faint.bbcode import to_bbcode
 
 def wrap(html: str) -> Tag:
-    return BeautifulSoup(f'<div>{html}</div>', 'lxml').contents[0]
+    return BeautifulSoup(f'<div>{html}</div>', 'lxml').div
 
 class BBCodeTestCase(TestCase):
     def assert_wrapped(self, bbcode: str, html: str, msg: str):
