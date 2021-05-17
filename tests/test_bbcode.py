@@ -57,6 +57,9 @@ class ConvertTagsTest(BBCodeTestCase):
         self.assert_wrapped('[b]bold [i]italics[/i][/b]', '<strong class="bbcode bbcode_b">bold <i class="bbcode bbcode_i">italics</i></strong>', 'Nested tags fail to convert correctly')
 
 class ConvertTextTest(BBCodeTestCase):
+    def test_newline(self):
+        self.assert_wrapped('one \ntwo\nthree', '\n                one <br>\ntwo<br>\nthree            ', 'Newline fails to convert correctly')
+
     def test_horizontalLine(self):
         self.assert_wrapped('-----', '<hr class="bbcode bbcode_hr">', 'Horizontal line fails to convert correctly')
 
