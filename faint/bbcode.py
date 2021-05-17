@@ -1,14 +1,5 @@
 from bs4.element import NavigableString, Tag
 
-SIMPLE_TAGS = {
-    'strong': 'b',
-    'i': 'i',
-    'u': 'u',
-    's': 's',
-    'sup': 'sup',
-    'sub': 'sub',
-}
-
 def to_bbcode(tag: Tag, descendant: bool = False) -> str:
     bbcode = ''
 
