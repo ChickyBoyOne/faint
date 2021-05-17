@@ -23,7 +23,7 @@ class ConvertTagsTest(BBCodeTestCase):
         self.assert_wrapped('[i]italics[/i]', '<i class="bbcode bbcode_i">italics</i>', 'Italics tag fails to convert correctly')
     
     def test_u(self):
-        self.assert_wrapped('[u]underline[/i]', '<u class="bbcode bbcode_u">underline</u>', 'Underline tag fails to convert correctly')
+        self.assert_wrapped('[u]underline[/u]', '<u class="bbcode bbcode_u">underline</u>', 'Underline tag fails to convert correctly')
     
     def test_s(self):
         self.assert_wrapped('[s]strikethrough[/s]', '<s class="bbcode bbcode_s">strikethrough</s>', 'Strikethrough tag fails to convert correctly')
