@@ -1,5 +1,3 @@
-from typing import Optional
-
 from bs4.element import NavigableString, Tag
 
 SIMPLE_TAGS = {
@@ -32,14 +30,24 @@ def to_bbcode(tag: Tag, descendant: bool = False) -> str:
                     child = child[:-12]
             
             bbcode += child
-            continue
-        
         # Newlines
-        if child.name == 'br':
+        elif child.name == 'br':
             bbcode += '\n'
-        # Simple tags
-        elif child.name in SIMPLE_TAGS:
-            bbcode_tag = SIMPLE_TAGS[child.name]
-            bbcode += f'[{bbcode_tag}]{to_bbcode(child, descendant=True)}[/{bbcode_tag}]'
+        # All other tags
+        elif (bbcode_tag_classes := [c for c in child['class'] if 'bbcode_' in c]) \
+                and len(bbcode_tag_parts := bbcode_tag_classes[0].split("_")) == 2:
+            if (bbcode_tag := bbcode_tag_parts[-1]) == 'quote':
+                contents = to_bbcode(child, descendant=True)
+
+                if (author := child.find("span", class_="bbcode_quote_name", recursive=False)):
+                    bbcode += f'[quote={author.get_text().split()[0]}]{contents}[/quote]'
+                else:
+                    bbcode += f'[quote]{contents}[/quote]'
+            elif bbcode_tag == 'hr':
+                bbcode += '-----'
+            else:
+                bbcode += f'[{bbcode_tag}]{to_bbcode(child, descendant=True)}[/{bbcode_tag}]'
+        elif child.name == 'span' and (style := child.get('style', '')):
+            bbcode += f'[color={style.split()[-1][:-1]}]{to_bbcode(child, descendant=True)}[/color]'
     
     return bbcode
