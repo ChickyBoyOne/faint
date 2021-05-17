@@ -5,8 +5,8 @@ from bs4 import BeautifulSoup
 import dateparser
 import httpx
 
-from .data import Favorite, Rating
-from .util import FA_BASE, normalize_url, not_class
+from .data import Favorite
+from .util import FA_BASE, cleave, normalize_url, not_class
 
 def get_favs(client: httpx.Client, username: str, since: datetime, until: datetime) -> list[Favorite]:
     base = f"{FA_BASE}/favorites/{username}/"
@@ -37,7 +37,7 @@ def get_favs(client: httpx.Client, username: str, since: datetime, until: dateti
         first = page_favs[0]
         favs.append(Favorite(
             sid=int(first["id"].replace("sid-", "")),
-            rating=not_class(first, "t-image"),
+            rating=cleave(not_class(first, "t-image")),
             username=first["data-user"].replace("u-", ""),
             id=first["data-fav-id"],
             time=last_fav_time.strftime("%Y/%m/%d %H:%M"),
