@@ -6,7 +6,7 @@ import dateparser
 from httpx import Client
 
 from faint.data import User
-from faint.gallery import get_
+from faint.gallery import get_gallery
 from faint.favs import get_favs
 from faint.profile import get_profile
 from faint.util import get_cookies, logger
@@ -41,7 +41,7 @@ def scrape_user(username: str, profile=False, gallery=False, favs=False, since_s
         if profile:
             user.profile = get_profile(client, username)
         if gallery:
-            user.gallery = get_
+            user.gallery = get_gallery(client, username)
         if favs:
             user.favs = get_favs(client, username, since=since, until=until)
     
