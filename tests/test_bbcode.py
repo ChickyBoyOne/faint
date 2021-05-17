@@ -53,7 +53,7 @@ class ConvertTagsTest(BBCodeTestCase):
         self.assert_wrapped('[right]right[/right]', '<code class="bbcode bbcode_right">right</code>', 'Right tag fails to convert correctly')
     
     def test_url(self):
-        self.assert_wrapped('[url=/journal/833448]url/[url]', '<a class="auto_link named_url" href="/journal/833448">url</a>', 'Relative URL tag fails to convert correctly')
+        self.assert_wrapped('[url=/journal/833448]url[url]', '<a class="auto_link named_url" href="/journal/833448">url</a>', 'Relative URL tag fails to convert correctly')
         self.assert_wrapped('[url=https://www.furaffinity.net]url/[url]', '<a class="auto_link named_url" href="https://www.furaffinity.net">url</a>', 'Absolute URL tag fails to convert correctly')
     
     def test_nesting(self):
