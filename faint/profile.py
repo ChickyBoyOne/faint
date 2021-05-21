@@ -59,6 +59,7 @@ def get_profile(client: Client, username: str) -> UserProfile:
     username = username[1:] if (username := name_block.get_text().strip())[0] in "~!∞" else username
     status = name_block["title"].split(": ")[-1].lower()
     special = get_special(name_block)
+    fa_plus = special.id == "fa-plus" if special else False
     title, _, joined = user_block.find("span", class_="font-small").get_text().strip().rpartition(" | ")
     title = title if title else None
     joined = format_date(joined.split(": ")[-1])
@@ -120,7 +121,7 @@ def get_profile(client: Client, username: str) -> UserProfile:
                     avatar=normalize_url(img["src"])
                 ) for div in body.div.find_all("div", recursive=False)]
             plural = body.h2.get_text().split()[-1]
-            user.shinies = shinies = Shinies(plural=plural, top=top)
+            user.shinies = shinies = Shinies(plural=plural if fa_plus else None, top=top)
             
             for donation in body.find_all("div", class_="comment_container"):
                 shinies.recent.append(ShinyDonation(
@@ -131,16 +132,17 @@ def get_profile(client: Client, username: str) -> UserProfile:
                     ),
                 ))
 
-                if len(parts := get_direct_text(donation.find("div", class_="name")).split()) == 5:
+                if fa_plus and len(parts := get_direct_text(donation.find("div", class_="name")).split()) == 5:
                     shinies.singular = parts[2]
 
                 if (message := donation.find("div", class_="comment_text").get_text(strip=True)):
                     message = message[1:][:-1]
                     shinies.recent[-1].message = message
         elif "Send " in label:
-            script = body.script.contents[0]
-            cost_line = next(l for l in script.splitlines() if "shinies_cost" in l)
-            shinies.price = cost_line.partition(" = ")[2][:-1]
+            if fa_plus:
+                script = body.script.contents[0]
+                cost_line = next(l for l in script.splitlines() if "shinies_cost" in l)
+                shinies.price = cost_line.partition(" = ")[2][:-1]
             shinies.messages = body.find("div", id="shinies-input") is not None
         elif label == "Recent Watchers":
             user.watchers = WatchInfo(
