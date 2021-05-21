@@ -1,9 +1,8 @@
 from __future__ import annotations
-from enum import Enum, IntEnum
+from enum import Enum
 from typing import Optional, Union
 
 from pydantic import BaseModel, HttpUrl
-from pydantic.networks import AnyHttpUrl
 
 class Special(BaseModel):
     id: str
@@ -122,19 +121,22 @@ class UserProfile(BaseModel):
     info: ProfileInfo = ProfileInfo()
     shouts: list[Shout] = []
 
-class FolderType(IntEnum):
-    SUBMISSIONS = 0
-    FOLDERS = 1
-
 class Submission(BaseModel):
     pass
 
 class Folder(BaseModel):
-    type: FolderType
-    contents: list[Union[Submission, Folder]] = []
+    name: str
+    description: Optional[str]
+    submissions: list[Submission] = []
+
+class FolderGroup(BaseModel):
+    name: str
+    folders: list[Folder] = []
 
 class Gallery(BaseModel):
-    folders: list[Folder] = []
+    main: list[Submission] = []
+    scraps: list[Submission] = []
+    folder_groups: list[Union[Folder, FolderGroup]] = []
 
 class Favorite(BaseModel):
     sid: int
