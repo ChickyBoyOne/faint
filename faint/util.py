@@ -1,4 +1,4 @@
-import functools
+from faint.data import Settings
 import json
 import logging
 from pathlib import Path
@@ -15,7 +15,7 @@ click_logging.basic_config(logger)
 COOKIES = ["__cfduid", "a", "b"]
 FA_BASE = "https://www.furaffinity.net"
 
-def get_cookies() -> "dict[str, str]":
+def get_cookies() -> dict[str, str]:
     cookies_path = Path(__file__).parent.parent / "cookies.json"
 
     with open(cookies_path) as cookies_file:
@@ -34,14 +34,12 @@ def get_cookies() -> "dict[str, str]":
     
     return cookies
 
-# TODO: Parse settings page for timezone
-parse_date = functools.partial(dateparser.parse, settings={"TIMEZONE": "US/Eastern"})
-
 def cleave(s: str) -> str:
     return s.split("-")[-1]
 
-def format_date(date: str) -> str:
-    return parse_date(date).strftime("%Y/%m/%d %H:%M")
+def format_date(date: str, settings: Settings) -> str:
+    date = dateparser.parse(date, settings={"TIMEZONE": settings.timezone})
+    return date.strftime("%Y/%m/%d %H:%M")
 
 def get_direct_text(tag: Tag) -> str:
     return [c for c in reversed(tag.contents) if type(c) is NavigableString][0].strip()

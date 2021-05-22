@@ -9,7 +9,7 @@ from httpx import Client
 
 from .bbcode import to_bbcode
 from .data import Badge, Contact, GallerySubmission, ProfileJournal, ProfileSubmission, Question, \
-    Rating, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
+    Rating, Settings, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
 from .util import cleave, FA_BASE, format_date, get_direct_text, get_subtitle_num, \
     normalize_url, not_class
 
@@ -23,7 +23,7 @@ def get_special(tag: Tag) -> Optional[Special]:
         title=img["title"],
     )
 
-def get_gallery_submissions(section: Tag, submission_data: dict[str, str]) -> list[GallerySubmission]:
+def get_gallery_submissions(section: Tag, submission_data: dict[str, str], settings: Settings) -> list[GallerySubmission]:
     submissions = []
 
     for figure in section.find_all("figure"):
@@ -38,7 +38,7 @@ def get_gallery_submissions(section: Tag, submission_data: dict[str, str]) -> li
             height=img["data-height"],
             title=unescape(data["title"]),
             username=data["username"],
-            time=format_date(BeautifulSoup(data["html_date"], "lxml").span["title"]),
+            time=format_date(BeautifulSoup(data["html_date"], "lxml").span["title"], settings),
             rating=data["icon_rating"],
         ))
     
@@ -50,8 +50,8 @@ def get_user_list(body: Tag) -> list[str]:
     
     return [td.get_text() for td in table.find_all("td")]
 
-def get_profile(client: Client, username: str) -> UserProfile:
-    r = client.get(f"{FA_BASE}/user/{username}/")
+def get_profile(client: Client, settings: Settings) -> UserProfile:
+    r = client.get(f"{FA_BASE}/user/{settings.username}/")
     soup = BeautifulSoup(r.text, "lxml")
 
     user_block = soup.find("div", class_="username")
@@ -62,7 +62,7 @@ def get_profile(client: Client, username: str) -> UserProfile:
     fa_plus = special.id == "fa-plus" if special else False
     title, _, joined = user_block.find("span", class_="font-small").get_text().strip().rpartition(" | ")
     title = title if title else None
-    joined = format_date(joined.split(": ")[-1])
+    joined = format_date(joined.split(": ")[-1], settings)
     avatar = normalize_url(soup.find("img", class_="user-nav-avatar")["src"])
 
     profile_block = soup.find("div", class_="userpage-profile")
@@ -90,7 +90,7 @@ def get_profile(client: Client, username: str) -> UserProfile:
                     username=username.get_text(),
                     special=get_special(username),
                     avatar=normalize_url(container.find("img", class_="comment_useravatar")["src"]),
-                    time=format_date(container.find("span", class_="popup_date").get_text()),
+                    time=format_date(container.find("span", class_="popup_date").get_text(), settings),
                     text=to_bbcode(container.find("div", class_="comment_text")),
                 ))
             
@@ -111,9 +111,9 @@ def get_profile(client: Client, username: str) -> UserProfile:
                 rating=cleave(body.a["class"][0]),
             )
         elif label == "Gallery":
-            user.gallery = get_gallery_submissions(section, submission_data)
+            user.gallery = get_gallery_submissions(section, submission_data, settings)
         elif label == "Favorites":
-            user.favorites = get_gallery_submissions(section, submission_data)
+            user.favorites = get_gallery_submissions(section, submission_data, settings)
         elif "'s Top Supporters" in label:
             top = [Supporter(
                     username=(img := div.img)["alt"],
@@ -166,7 +166,7 @@ def get_profile(client: Client, username: str) -> UserProfile:
                 url=normalize_url(href),
                 comments=get_subtitle_num(header),
                 title=body.h2.get_text(),
-                time=format_date(body.find("span", class_="popup_date")["title"]),
+                time=format_date(body.find("span", class_="popup_date")["title"], settings),
                 text=to_bbcode(body.div),
             )
         elif label == "Badges":

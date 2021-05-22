@@ -1,15 +1,13 @@
-from datetime import datetime
 import sys
 
 from bs4 import BeautifulSoup
-import dateparser
 from httpx import Client
 
-from .data import Favorite
-from .util import FA_BASE, cleave, normalize_url, not_class
+from .data import Favorite, Settings
+from .util import FA_BASE, cleave, format_date, normalize_url, not_class
 
-def get_favs(client: Client, username: str, since: datetime, until: datetime) -> list[Favorite]:
-    base = f"{FA_BASE}/favorites/{username}/"
+def get_favs(client: Client, settings: Settings) -> list[Favorite]:
+    base = f"{FA_BASE}/favorites/{settings.username}/"
     url = base
     favs = []
     
@@ -19,19 +17,19 @@ def get_favs(client: Client, username: str, since: datetime, until: datetime) ->
         page_favs = soup.select("figure[data-fav-id]")
 
         try:
-            last_fav_time = dateparser.parse(soup.select_one("div.midsection span")["title"], settings={"TIMEZONE": "US/Eastern", "TO_TIMEZONE": "US/Central"})
+            last_fav_time = format_date(soup.select_one("div.midsection span")["title"])
         except TypeError:
             if soup.find("div", id="no-images"):
                 break
             else:
-                print(f"User {username} not found!")
+                print(f"User {settings.username} not found!")
                 sys.exit(1)
 
         url = base + page_favs[0]["data-fav-id"] + "/next/"
         
-        if since > last_fav_time:
+        if settings.since > last_fav_time:
             break
-        elif until < last_fav_time:
+        elif settings.until < last_fav_time:
             continue
         
         first = page_favs[0]

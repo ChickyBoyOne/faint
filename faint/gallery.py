@@ -1,9 +1,8 @@
-from datetime import datetime
 from httpx import Client
 
-from .data import Gallery
+from .data import Gallery, Settings
 
-def get_gallery(client: Client, username: str, since: datetime, until: datetime) -> Gallery:
+def get_gallery(client: Client, settings: Settings) -> Gallery:
     gallery = Gallery()
 
     return gallery

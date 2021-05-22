@@ -1,8 +1,15 @@
 from __future__ import annotations
+from datetime import datetime
 from enum import Enum
 from typing import Optional, Union
 
 from pydantic import BaseModel, HttpUrl
+
+class Settings(BaseModel):
+    username: str
+    timezone: str
+    since: datetime
+    until: datetime
 
 class Special(BaseModel):
     id: str
