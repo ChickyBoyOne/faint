@@ -18,7 +18,7 @@ pydantic = {extras = ["email"], version = "^1.8.2"}
 pytest = "^5.2"
 
 [tool.poetry.scripts]
-faint = "faint.cli:cli"
+faint = "faint.cli:scrape_user"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

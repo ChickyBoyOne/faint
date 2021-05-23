@@ -4,11 +4,12 @@ import sys
 from bs4 import BeautifulSoup
 import dateparser
 from httpx import Client
+from pytz.exceptions import UnknownTimeZoneError
 
 from .data import Settings
 from .util import FA_BASE, logger
 
-def get_settings(client: Client, username: str, since_str: str, until_str: str) -> Settings:
+def get_settings(client: Client, username: str, after_str: str, before_str: str, to_timezone: str) -> Settings:
     errors = []
 
     settings = client.get(f"{FA_BASE}/controls/settings/")
@@ -25,10 +26,16 @@ def get_settings(client: Client, username: str, since_str: str, until_str: str) 
             tz += timedelta(hours=1)
     tz = timezone(tz).tzname(None)
 
-    if not (since := dateparser.parse(since_str)):
-        errors.append(f"{since_str} is not a valid date/time!")
-    if not (until := dateparser.parse(until_str)):
-        errors.append(f"{until_str} is not a valid date/time!")
+    try:
+        dateparser.parse("1970-01-01", date_formats=["%Y-%m-%d"], locales=["en-US"],
+            settings={"TO_TIMEZONE": to_timezone})
+    except UnknownTimeZoneError:
+        errors.append(f"{to_timezone} is not a valid timezone! Please choose one from this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones")
+
+    if not (after := dateparser.parse(after_str, settings={"TIMEZONE": tz, "RETURN_AS_TIMEZONE_AWARE": True})):
+        errors.append(f"{after_str} is not a valid date/time!")
+    if not (before := dateparser.parse(before_str, settings={"TIMEZONE": tz, "RETURN_AS_TIMEZONE_AWARE": True})):
+        errors.append(f"{before_str} is not a valid date/time!")
 
     if errors:
         for error in errors:
@@ -38,6 +45,7 @@ def get_settings(client: Client, username: str, since_str: str, until_str: str) 
         return Settings(
             username=username,
             timezone=tz,
-            since=since,
-            until=until,
+            to_timezone=to_timezone,
+            after=after,
+            before=before,
         )

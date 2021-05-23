@@ -8,8 +8,9 @@ from pydantic import BaseModel, HttpUrl
 class Settings(BaseModel):
     username: str
     timezone: str
-    since: datetime
-    until: datetime
+    to_timezone: str
+    after: datetime
+    before: datetime
 
 class Special(BaseModel):
     id: str
@@ -36,7 +37,7 @@ class GallerySubmission(BaseModel):
     height: float
     title: str
     username: str
-    time: str
+    time: datetime
     rating: Rating
 
 class Supporter(BaseModel):
@@ -74,7 +75,7 @@ class ProfileJournal(BaseModel):
     url: HttpUrl
     comments: int
     title: str
-    time: str
+    time: datetime
     text: str
 
 class Badge(BaseModel):
@@ -104,7 +105,7 @@ class Shout(BaseModel):
     username: str
     special: Optional[Special] = ...
     avatar: str
-    time: str
+    time: datetime
     text: str
 
 class UserProfile(BaseModel):
@@ -112,7 +113,7 @@ class UserProfile(BaseModel):
     status: str
     special: Optional[Special] = ...
     title: Optional[str] = ...
-    joined: str
+    joined: datetime
     avatar: str
     profile: str
 
@@ -150,7 +151,7 @@ class Favorite(BaseModel):
     rating: Rating
     username: str
     id: int
-    time: str
+    time: datetime
     url: HttpUrl
 
 class User(BaseModel):

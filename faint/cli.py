@@ -21,16 +21,17 @@ HEADERS = {
 @click.option("-p/-np", "--profile/--no-profile", default=False, help="Enable/disable profile collection (will be enabled if all other sources are disabled")
 @click.option("-g/-ng", "--gallery/--no-gallery", default=False, help="Enable/disable gallery collection")
 @click.option("-f/-nf", "--favs/--no-favs", default=False, help="Enable/disable favorites collection")
-@click.option("--since", "since_str", default="1970-01-01", help="Only save content since this date/time")
-@click.option("--until", "until_str", default="tomorrow", help="Only save content until this date/time")
+@click.option("--after", "after_str", default="1970-01-01", help="Only save content after this date/time")
+@click.option("--before", "before_str", default="in 2 days", help="Only save content before this date/time")
+@click.option("--timezone", default="UTC", help="Convert times to this timezone (default: UTC)")
 @click.option("-o", "--outfile", type=click.File("w"), default=sys.stdout, help="Output to this file (default: stdout)")
-def scrape_user(username: str, profile=False, gallery=False, favs=False, since_str="1970-01-01", until_str="tomorrow", outfile=sys.stdout):
+def scrape_user(username: str, profile, gallery, favs, after_str, before_str, timezone, outfile):
     user = User()
     if not any([profile, gallery, favs]):
         profile = True
 
     with Client(headers=HEADERS, cookies=get_cookies()) as client:
-        settings = get_settings(client, username, since_str, until_str)
+        settings = get_settings(client, username, after_str, before_str, timezone)
         if profile:
             user.profile = get_profile(client, settings)
         if gallery:

@@ -17,7 +17,7 @@ def get_favs(client: Client, settings: Settings) -> list[Favorite]:
         page_favs = soup.select("figure[data-fav-id]")
 
         try:
-            last_fav_time = format_date(soup.select_one("div.midsection span")["title"])
+            last_fav_time = format_date(soup.select_one("div.midsection span")["title"], settings)
         except TypeError:
             if soup.find("div", id="no-images"):
                 break
@@ -26,11 +26,13 @@ def get_favs(client: Client, settings: Settings) -> list[Favorite]:
                 sys.exit(1)
 
         url = base + page_favs[0]["data-fav-id"] + "/next/"
-        
-        if settings.since > last_fav_time:
-            break
-        elif settings.until < last_fav_time:
+
+        # Reverse chronological order: we're not there yet
+        if settings.before < last_fav_time:
             continue
+        # We're all done - no more inside the range
+        elif settings.after > last_fav_time:
+            break
         
         first = page_favs[0]
         favs.append(Favorite(
@@ -38,7 +40,7 @@ def get_favs(client: Client, settings: Settings) -> list[Favorite]:
             rating=cleave(not_class(first, "t-image")),
             username=first["data-user"].replace("u-", ""),
             id=first["data-fav-id"],
-            time=last_fav_time.strftime("%Y/%m/%d %H:%M"),
+            time=last_fav_time,
             url=normalize_url(first.find("a")["href"]),
         ))
         

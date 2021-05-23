@@ -1,4 +1,4 @@
-from faint.data import Settings
+from datetime import datetime
 import json
 import logging
 from pathlib import Path
@@ -8,6 +8,8 @@ from bs4 import Tag
 from bs4.element import NavigableString
 import click_logging
 import dateparser
+
+from .data import Settings
 
 logger = logging.getLogger(__name__)
 click_logging.basic_config(logger)
@@ -37,9 +39,12 @@ def get_cookies() -> dict[str, str]:
 def cleave(s: str) -> str:
     return s.split("-")[-1]
 
-def format_date(date: str, settings: Settings) -> str:
-    date = dateparser.parse(date, settings={"TIMEZONE": settings.timezone})
-    return date.strftime("%Y/%m/%d %H:%M")
+def format_date(date: str, settings: Settings) -> datetime:
+    return dateparser.parse(date, settings={
+        "TIMEZONE": settings.timezone,
+        "TO_TIMEZONE": settings.to_timezone,
+        "RETURN_AS_TIMEZONE_AWARE": True,
+    })
 
 def get_direct_text(tag: Tag) -> str:
     return [c for c in reversed(tag.contents) if type(c) is NavigableString][0].strip()
