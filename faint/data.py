@@ -141,11 +141,6 @@ class FolderGroup(BaseModel):
     name: str
     folders: list[Folder] = []
 
-class Gallery(BaseModel):
-    main: list[Submission] = []
-    scraps: list[Submission] = []
-    folder_groups: list[Union[Folder, FolderGroup]] = []
-
 class Favorite(BaseModel):
     sid: int
     rating: Rating
@@ -156,5 +151,7 @@ class Favorite(BaseModel):
 
 class User(BaseModel):
     profile: Optional[UserProfile]
-    gallery: Optional[Gallery]
-    favs: list[Favorite] = []
+    gallery: Optional[list[Submission]]
+    scraps: Optional[list[Submission]]
+    folders: Optional[list[Union[Folder, FolderGroup]]]
+    favs: Optional[list[Favorite]]

@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from httpx import Client
 
 from .data import Favorite, Settings
-from .util import FA_BASE, cleave, format_date, normalize_url, not_class
+from .util import cleave, FA_BASE, format_date, get_page_soup, normalize_url, not_class
 
 def get_favs(client: Client, settings: Settings) -> list[Favorite]:
     base = f"{FA_BASE}/favorites/{settings.username}/"
@@ -12,8 +12,7 @@ def get_favs(client: Client, settings: Settings) -> list[Favorite]:
     favs = []
     
     while True:
-        favs_page = client.get(url)
-        soup = BeautifulSoup(favs_page.text, "lxml")
+        soup = get_page_soup(client, url)
         page_favs = soup.select("figure[data-fav-id]")
 
         try:

@@ -7,13 +7,12 @@ from httpx import Client
 from pytz.exceptions import UnknownTimeZoneError
 
 from .data import Settings
-from .util import FA_BASE, logger
+from .util import FA_BASE, get_page_soup, logger
 
 def get_settings(client: Client, username: str, after_str: str, before_str: str, to_timezone: str) -> Settings:
     errors = []
 
-    settings = client.get(f"{FA_BASE}/controls/settings/")
-    soup = BeautifulSoup(settings.text, "lxml")
+    soup = get_page_soup(client, f"{FA_BASE}/controls/settings/")
     tz = soup.find("select", attrs={"name": "timezone"}).find("option", selected="selected")["value"]
     negative, hours, minutes = tz[0] == "-", int(tz[1:3]), int(tz[3:5])
     tz = timedelta(hours=hours, minutes=minutes)

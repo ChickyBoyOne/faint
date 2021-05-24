@@ -4,10 +4,11 @@ import logging
 from pathlib import Path
 from urllib.parse import ParseResult, urlparse, urlunparse
 
-from bs4 import Tag
+from bs4 import BeautifulSoup, Tag
 from bs4.element import NavigableString
 import click_logging
 import dateparser
+from httpx import Client
 
 from .data import Settings
 
@@ -48,6 +49,12 @@ def format_date(date: str, settings: Settings) -> datetime:
 
 def get_direct_text(tag: Tag) -> str:
     return [c for c in reversed(tag.contents) if type(c) is NavigableString][0].strip()
+
+def get_soup(html: str) -> BeautifulSoup:
+    return BeautifulSoup(html, "lxml")
+
+def get_page_soup(client: Client, url: str) -> BeautifulSoup:
+    return get_soup(client.get(url).text)
 
 def get_subtitle_num(header: Tag) -> int:
     for word in header.a.get_text().split("(")[-1].split(")")[0].split():

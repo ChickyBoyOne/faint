@@ -10,8 +10,8 @@ from httpx import Client
 from .bbcode import to_bbcode
 from .data import Badge, Contact, GallerySubmission, ProfileJournal, ProfileSubmission, Question, \
     Rating, Settings, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
-from .util import cleave, FA_BASE, format_date, get_direct_text, get_subtitle_num, \
-    normalize_url, not_class
+from .util import cleave, FA_BASE, format_date, get_direct_text, get_page_soup, get_soup, \
+    get_subtitle_num, normalize_url, not_class
 
 def get_special(tag: Tag) -> Optional[Special]:
     if not (img := tag.img):
@@ -38,7 +38,7 @@ def get_gallery_submissions(section: Tag, submission_data: dict[str, str], setti
             height=img["data-height"],
             title=unescape(data["title"]),
             username=data["username"],
-            time=format_date(BeautifulSoup(data["html_date"], "lxml").span["title"], settings),
+            time=format_date(get_soup(data["html_date"]).span["title"], settings),
             rating=data["icon_rating"],
         ))
     
@@ -51,8 +51,7 @@ def get_user_list(body: Tag) -> list[str]:
     return [td.get_text() for td in table.find_all("td")]
 
 def get_profile(client: Client, settings: Settings) -> UserProfile:
-    r = client.get(f"{FA_BASE}/user/{settings.username}/")
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = get_page_soup(client, f"{FA_BASE}/user/{settings.username}/")
 
     user_block = soup.find("div", class_="username")
     name_block = user_block.select_one("h2 span")
