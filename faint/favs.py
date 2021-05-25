@@ -1,6 +1,5 @@
 import sys
 
-from bs4 import BeautifulSoup
 from httpx import Client
 
 from .data import Favorite, Settings

@@ -1,7 +1,6 @@
 from datetime import timedelta, timezone
 import sys
 
-from bs4 import BeautifulSoup
 import dateparser
 from httpx import Client
 from pytz.exceptions import UnknownTimeZoneError
