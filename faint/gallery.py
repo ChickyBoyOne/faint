@@ -1,5 +1,3 @@
-from faint.cli import scrape_user
-from pprint import pprint
 from typing import Union
 
 from httpx import Client
@@ -22,8 +20,6 @@ def scrape_folder(client: Client, folder: str) -> list[Submission]:
         submissions = soup.select("figure u a")
         submission_urls += [FA_BASE + a["href"] for a in submissions]
         url = FA_BASE + buttons[-1]["action"]
-
-    pprint(submission_urls)
 
     return []
 
