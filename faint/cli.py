@@ -3,18 +3,11 @@ import sys
 
 import click
 import click_logging
-from httpx import Client
+from scrapy.crawler import CrawlerProcess
+from scrapy.settings import Settings
 
-from faint.data import User
-from faint.gallery import get_folders, get_gallery, get_scraps
-from faint.favs import get_favs
-from faint.profile import get_profile
-from faint.settings import get_settings
+from faint.scraper.spiders.user import UserSpider
 from faint.util import get_cookies, logger
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; faint/0.1; https://furaffinity.net/user/WrenFing/)",
-}
 
 @click.command()
 @click_logging.simple_verbosity_option(logger)
@@ -30,24 +23,12 @@ HEADERS = {
 @click.option("-o", "--outfile", type=click.File("w"), default=sys.stdout, help="Output to this file (default: stdout)")
 def scrape_user(username: str, profile: bool, gallery: bool, scraps: bool, folders: bool, favs: bool,
         after_str: str, before_str: str, timezone: str, outfile: TextIOWrapper):
-    user = User()
-    if not any([profile, gallery, favs]):
-        profile = True
-
-    with Client(headers=HEADERS, cookies=get_cookies()) as client:
-        settings = get_settings(client, username, after_str, before_str, timezone)
-        if profile:
-            user.profile = get_profile(client, settings)
-        if gallery:
-            user.gallery = get_gallery(client, settings)
-        if scraps:
-            user.scraps = get_scraps(client, settings)
-        if folders:
-            user.folders = get_folders(client, settings)
-        if favs:
-            user.favs = get_favs(client, settings)
-    
-    outfile.write(user.json(indent=4))
+    # Point Scrapy to settings: https://stackoverflow.com/a/29874137
+    settings = Settings()
+    settings.setmodule('scraper.settings')
+    process = CrawlerProcess(settings)
+    process.crawl(UserSpider, cookies=get_cookies(), username=username)
+    process.start()
 
 if __name__ == "__main__":
     scrape_user()
