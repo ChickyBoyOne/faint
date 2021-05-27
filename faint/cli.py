@@ -6,7 +6,7 @@ import click_logging
 from scrapy.crawler import CrawlerProcess
 from scrapy.settings import Settings
 
-from faint.scraper.spiders.user import UserSpider
+from faint.scraper.spiders.settings import SettingsSpider
 from faint.util import get_cookies, logger
 
 @click.command()
@@ -27,7 +27,19 @@ def scrape_user(username: str, profile: bool, gallery: bool, scraps: bool, folde
     settings = Settings()
     settings.setmodule('scraper.settings')
     process = CrawlerProcess(settings)
-    process.crawl(UserSpider, cookies=get_cookies(), username=username)
+    process.crawl(
+        SettingsSpider,
+        cookies=get_cookies(),
+        username=username,
+        to_timezone=timezone,
+        after=after_str,
+        before=before_str,
+        profile=profile,
+        gallery=gallery,
+        scraps=scraps,
+        folders=folders,
+        favs=favs,
+    )
     process.start()
 
 if __name__ == "__main__":
