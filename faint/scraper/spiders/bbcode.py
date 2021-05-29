@@ -1,7 +1,15 @@
-from bs4.element import NavigableString, Tag
+from typing import Union
 
-def to_bbcode(tag: Tag, descendant: bool = False) -> str:
+from bs4 import BeautifulSoup, NavigableString, Tag
+from scrapy.selector.unified import SelectorList
+
+from .utils import get_soup
+
+
+def to_bbcode(tag: Union[SelectorList, Tag], descendant: bool = False) -> str:
     bbcode = ''
+    if isinstance(tag, SelectorList):
+        tag = get_soup(tag[0].get())
 
     for i, child in enumerate(tag.contents):
         # Text fragments

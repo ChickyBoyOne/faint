@@ -3,14 +3,14 @@ from unittest import TestCase
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from faint.bbcode import to_bbcode
-from faint.util import get_soup
+from faint.scraper.spiders.bbcode import to_bbcode
+from faint.scraper.spiders.utils import get_soup
 
 START = ' ' * 16
 END = ' ' * 12
 
 def wrap(html: str) -> Tag:
-    return get_soup(f'<div>{html}</div>').div
+    return get_soup(f'<div>{html}</div>')
 
 class BBCodeTestCase(TestCase):
     def assert_wrapped(self, bbcode: str, html: str, msg: str):

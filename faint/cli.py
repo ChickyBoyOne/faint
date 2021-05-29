@@ -7,7 +7,8 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.settings import Settings
 
 from faint.scraper.spiders.settings import SettingsSpider
-from faint.util import get_cookies, logger
+from faint.utils import get_cookies, logger
+
 
 @click.command()
 @click_logging.simple_verbosity_option(logger)
