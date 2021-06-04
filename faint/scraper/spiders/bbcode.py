@@ -4,7 +4,7 @@ from typing import Union
 from bs4 import NavigableString, Tag
 from scrapy.selector.unified import SelectorList
 
-from .utils import get_soup
+from .utils import get_soup, not_class
 
 
 class BBCodeLocation(Enum):
@@ -12,6 +12,21 @@ class BBCodeLocation(Enum):
     COMMENT = (12, 8)
     SUBMISSION = (20, 36)
     JOURNAL = (0, 0)
+
+SMILIES = {
+    'tongue': ':-p',
+    'wink': ';-)',
+    'oooh': ':-o',
+    'smile': ':-)',
+    'sad': ':-(',
+    **{smilie: f':{smilie}:' for smilie in [
+        'cool', 'evil', 'huh', 'whatever', 'angel', 'badhair',
+        'lmao', 'cd', 'cry', 'idunno', 'embarrassed', 'gift',
+        'coffee', 'love', 'isanerd', 'note', 'derp', 'sarcastic',
+        'serious', 'sleepy', 'teeth', 'veryhappy', 'yellling',
+        'zipped',
+    ]},
+}
 
 def to_bbcode(tag: Union[SelectorList, Tag], location: BBCodeLocation, descendant: bool = False) -> str:
     bbcode = ''
@@ -21,7 +36,7 @@ def to_bbcode(tag: Union[SelectorList, Tag], location: BBCodeLocation, descendan
     for i, child in enumerate(tag.contents):
         # Text fragments
         # - Newlines are duplicated between text and tags
-        # - First and last bounded by 16 and 12 spaces, respectively
+        # - First and last bounded by different amounts of spaces depending on location
         if type(child) == NavigableString:
             child = child \
                 .replace('\n', '') \
@@ -58,6 +73,9 @@ def to_bbcode(tag: Union[SelectorList, Tag], location: BBCodeLocation, descendan
                 bbcode += '-----'
             else:
                 bbcode += f'[{bbcode_tag}]{to_bbcode(child, location, descendant=True)}[/{bbcode_tag}]'
+        # Smilies
+        elif child.name == 'i':
+            bbcode += SMILIES[not_class(child, 'smilie')]
         # Color tag
         elif child.name == 'span' and (style := child.get('style', '')):
             bbcode += f'[color={style.split()[-1][:-1]}]{to_bbcode(child, location, descendant=True)}[/color]'

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Union
 from urllib.parse import ParseResult, urlparse, urlunparse
 
 from bs4 import BeautifulSoup, Tag
@@ -47,7 +48,12 @@ def normalize_url(url: str) -> str:
         fragment=parsed.fragment,
     ))
 
-def not_class(tag: SelectorList, bad: str) -> str:
-    for c in tag.attrib.get("class", "").split(" "):
+def not_class(tag: Union[SelectorList, Tag], bad: str) -> str:
+    if isinstance(tag, SelectorList):
+        classes = tag.attrib.get("class", "").split(" ")
+    else:
+        classes = tag["class"]
+    
+    for c in classes:
         if c not in ["", bad]:
             return c
