@@ -13,6 +13,7 @@ class BBCodeLocation(Enum):
     SUBMISSION = (20, 36)
     JOURNAL = (0, 0)
 
+# Thanks to this list by NezumiYuki: https://www.furaffinity.net/view/34443793/
 SMILIES = {
     'tongue': ':-p',
     'wink': ';-)',
