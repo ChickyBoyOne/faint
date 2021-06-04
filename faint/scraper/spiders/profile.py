@@ -7,7 +7,7 @@ from scrapy.selector.unified import SelectorList
 
 from faint.scraper.spiders.bbcode import BBCodeLocation, to_bbcode
 from faint.scraper.spiders.utils import cleave, format_date, get_direct_text, get_soup, normalize_url, not_class
-from faint.scraper.items import GallerySubmission, ProfileSubmission, Shout, Special, UserProfile
+from faint.scraper.items import GallerySubmission, ProfileSubmission, Shinies, ShinyDonation, Shout, Special, Supporter, UserProfile
 
 
 class ProfileSpider:
@@ -19,8 +19,8 @@ class ProfileSpider:
         
         return Special(
             id=not_class(img, "inline").replace("-icon", "").replace("-logo", ""),
-            img=normalize_url(img["src"]),
-            title=img["title"],
+            img=normalize_url(img.attrib["src"]),
+            title=img.attrib["title"],
         )
     
     def get_gallery_submissions(self, section: SelectorList) -> list[GallerySubmission]:
@@ -45,7 +45,7 @@ class ProfileSpider:
     def parse_profile(self, response: HtmlResponse):
         user_block = response.css("div.username")
         name_block = user_block.css("h2 span")
-        username = username[1:] if (username := get_direct_text(name_block).strip()) else username
+        username = username[1:] if (username := get_direct_text(name_block).strip())[0] in "~!∞" else username
         status = name_block.attrib["title"].split(": ")[-1].lower()
         special = self.get_special(name_block)
         fa_plus = special.id == "fa-plus" if special else False
@@ -103,10 +103,33 @@ class ProfileSpider:
                 user.gallery = self.get_gallery_submissions(section)
             elif label == "Favorites":
                 user.favorites = self.get_gallery_submissions(section)
-            elif "'s Top Supporters" in label:
-                pass
-            elif "Send " in label:
-                pass
+            elif label == f"{username}'s Top Supporters":
+                top = [Supporter(
+                    username=(img := div.css("img")).attrib["alt"],
+                    url=normalize_url(div.css("a::attr(href)").get()),
+                    avatar=normalize_url(normalize_url(img.attrib["src"])),
+                ) for div in body.css("div.shinies-top-3-container > div")]
+                plural = body.css("h2::text").get().split()[-1]
+                user.shinies = shinies = Shinies(plural=plural if fa_plus else None, top=top)
+
+                for donation_div in body.css("div.comment_container"):
+                    shinies.recent.append((donation := ShinyDonation(supporter=Supporter(
+                        username=(img := donation_div.css("img")).attrib["alt"],
+                        url=normalize_url(donation_div.css("a::attr(href)").get()),
+                        avatar=normalize_url(img.attrib["src"]),
+                    ))))
+
+                if fa_plus and len(parts := get_direct_text(donation_div.find("div", class_="name")).split()) == 5:
+                    shinies.singular = parts[2]
+                
+                if (message := donation_div.css("div.comment_text::text").get()):
+                    donation.message = message.strip()[1:][:-1]
+            elif label.startswith(f"Send {username} "):
+                if fa_plus:
+                    script = body.css("script::text").get()
+                    cost_line = next(l for l in script.splitlines() if "shinies_cost" in l)
+                    shinies.price = cost_line.partition(" = ")[2][:-1]
+                shinies.messages = len(body.css("div.shinies-input")) > 0
             elif label == "Recent Watchers":
                 pass
             elif label == "Recently Watched":

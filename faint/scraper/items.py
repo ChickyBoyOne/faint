@@ -53,7 +53,7 @@ class ShinyDonation(BaseModel):
 class Shinies(BaseModel):
     # Singular descriptor is not necessarily present
     singular: Optional[str]
-    plural: str
+    plural: Optional[str] = ...
     top: list[Supporter] = []
     recent: list[ShinyDonation] = []
     price: int = 5
