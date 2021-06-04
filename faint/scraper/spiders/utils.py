@@ -30,13 +30,6 @@ def get_direct_text(tag: SelectorList) -> str:
 def get_text(tag: SelectorList) -> str:
     return "".join(tag.css("*::text").getall())
 
-def get_subtitle_num(header: SelectorList) -> int:
-    for word in get_text(header).split("(")[-1].split(")")[0].split():
-        try:
-            return int(word)
-        except ValueError:
-            continue
-
 def normalize_url(url: str) -> str:
     parsed = urlparse(url)
     return urlunparse(ParseResult(

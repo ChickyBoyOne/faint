@@ -6,8 +6,8 @@ from scrapy.http.response.html import HtmlResponse
 from scrapy.selector.unified import SelectorList
 
 from faint.scraper.spiders.bbcode import BBCodeLocation, to_bbcode
-from faint.scraper.spiders.utils import cleave, format_date, get_direct_text, get_soup, normalize_url, not_class
-from faint.scraper.items import GallerySubmission, ProfileSubmission, Shinies, ShinyDonation, Shout, Special, Supporter, UserProfile
+from faint.scraper.spiders.utils import cleave, format_date, get_direct_text, get_soup, get_text, normalize_url, not_class
+from faint.scraper.items import GallerySubmission, ProfileSubmission, Shinies, ShinyDonation, Shout, Special, Supporter, UserProfile, WatchInfo
 
 
 class ProfileSpider:
@@ -41,6 +41,19 @@ class ProfileSpider:
                 time=format_date(get_soup(data["html_date"])["title"], self.parameters),
                 rating=data["icon_rating"],
             ))
+
+    def get_subtitle_num(self, header: SelectorList) -> int:
+        for word in get_text(header).split("(")[-1].split(")")[0].split():
+            try:
+                return int(word)
+            except ValueError:
+                continue
+    
+    def get_user_list(self, body: SelectorList) -> list[str]:
+        if not (table := body.css("table")):
+            return []
+        
+        return table.css("span::text").getall()
     
     def parse_profile(self, response: HtmlResponse):
         user_block = response.css("div.username")
@@ -131,9 +144,15 @@ class ProfileSpider:
                     shinies.price = cost_line.partition(" = ")[2][:-1]
                 shinies.messages = len(body.css("div.shinies-input")) > 0
             elif label == "Recent Watchers":
-                pass
+                user.watchers = WatchInfo(
+                    num=self.get_subtitle_num(header),
+                    recent=self.get_user_list(body),
+                )
             elif label == "Recently Watched":
-                pass
+                user.watched = WatchInfo(
+                    num=self.get_subtitle_num(header),
+                    recent=self.get_user_list(body),
+                )
             elif label == "Stats":
                 pass
             elif label == "Recent Journal":
