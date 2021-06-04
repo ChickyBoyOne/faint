@@ -4,7 +4,7 @@ import sys
 import click
 import click_logging
 from scrapy.crawler import CrawlerProcess
-from scrapy.settings import Settings
+from scrapy.utils.project import get_project_settings
 
 from faint.scraper.spiders.user import UserSpider
 from faint.utils import get_cookies, logger
@@ -24,10 +24,7 @@ from faint.utils import get_cookies, logger
 @click.option("-o", "--outfile", type=click.File("w"), default=sys.stdout, help="Output to this file (default: stdout)")
 def scrape_user(username: str, profile: bool, gallery: bool, scraps: bool, folders: bool, favs: bool,
         after_str: str, before_str: str, timezone: str, outfile: TextIOWrapper):
-    # Point Scrapy to settings: https://stackoverflow.com/a/29874137
-    settings = Settings()
-    settings.setmodule('scraper.settings')
-    process = CrawlerProcess(settings)
+    process = CrawlerProcess(get_project_settings())
     process.crawl(
         UserSpider,
         cookies=get_cookies(),
