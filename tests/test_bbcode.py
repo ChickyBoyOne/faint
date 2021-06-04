@@ -65,7 +65,12 @@ class ConvertTextTest(BBCodeTestCase):
         for location in BBCodeLocation:
             start, end = location.value
             name = location.name.lower()
-            self.assert_wrapped(name, f'{" " * start}{name}{" " * end}', f'Text with {name} padding fails to convert correctly')
+            self.assert_wrapped(
+                name,
+                f'{" " * start}{name}{" " * end}',
+                f'Text with {name} padding fails to convert correctly',
+                location=location,
+            )
 
     def test_horizontalLine(self):
         self.assert_wrapped('-----', '<hr class="bbcode bbcode_hr">', 'Horizontal line fails to convert correctly')

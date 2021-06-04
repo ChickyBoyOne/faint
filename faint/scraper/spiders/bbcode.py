@@ -30,10 +30,12 @@ def to_bbcode(tag: Union[SelectorList, Tag], location: BBCodeLocation, descendan
                 .replace('®', '(r)')
             
             if not descendant:
+                start, end = location.value
+
                 if i == 0:
-                    child = child[16:]
-                if i == len(tag.contents) - 1:
-                    child = child[:-12]
+                    child = child[start:]
+                if i == len(tag.contents) - 1 and end > 0:
+                    child = child[:-end]
             
             bbcode += child
         # Newlines
