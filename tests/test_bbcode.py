@@ -85,9 +85,29 @@ class ConvertTextTest(BBCodeTestCase):
         self.assert_wrapped('user@domain.com', '<a class="auto_link email" href="mailto:user@domain.com">user[at]domain.com</a>', 'Email fails to convert correctly')
     
     def test_symbols(self):
-        self.assert_wrapped('(c)', '©', 'Copyright symbol fails to convert correctly')
-        self.assert_wrapped('(tm)', '™', 'Trademark symbol fails to convert correctly')
-        self.assert_wrapped('(r)', '®', 'Registered symbol fails to convert correctly')
+        for bbcode, symbol, name in [
+            ('(c)', '©', 'copyright'),
+            ('(tm)', '™', 'trademark'),
+            ('(r)', '®', 'registered'),
+        ]:
+            self.assert_wrapped(bbcode, symbol, f'{name.capitalize()} symbol fails to convert correctly')
+        
+    def test_smilies(self):
+        for bbcode, class_ in [
+            (':-p', 'tongue'),
+            (';-)', 'wink'),
+            (':-o', 'oooh'),
+            (':-)', 'smile'),
+            (':-(', 'sad'),
+            *[(f':{smilie}:', smilie) for smilie in [
+                'cool', 'evil', 'huh', 'whatever', 'angel', 'badhair',
+                'lmao', 'cd', 'cry', 'idunno', 'embarrassed', 'gift',
+                'coffee', 'love', 'isanerd', 'note', 'derp', 'sarcastic',
+                'serious', 'sleepy', 'teeth', 'veryhappy', 'yellling',
+                'zipped',
+            ]],
+        ]:
+            self.assert_wrapped(bbcode, f'<i class="smilie {class_}"></i>', f'Smilie {bbcode} fails to convert correctly')
     
     def test_userIconWithText(self):
         self.assert_wrapped(':iconFender:', '<a href="/user/fender" class="iconusername"><img src="//a.furaffinity.net/20210516/fender.gif" align="middle" title="Fender" alt="Fender">&nbsp;Fender</a>', 'User icon with text fails convert correctly')
