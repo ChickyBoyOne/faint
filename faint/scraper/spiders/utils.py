@@ -21,7 +21,7 @@ def format_date(date: str, parameters: Parameters) -> datetime:
     })
 
 def get_soup(html: str) -> Tag:
-    return BeautifulSoup(html, "lxml").div
+    return BeautifulSoup(html, "lxml").body.contents[0]
 
 def get_direct_text(tag: SelectorList) -> str:
     return "".join(tag.css("::text").getall())

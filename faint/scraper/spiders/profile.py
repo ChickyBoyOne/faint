@@ -38,7 +38,7 @@ class ProfileSpider:
                 height=img.attrib["data-height"],
                 title=unescape(data["title"]),
                 username=data["username"],
-                time=format_date(get_soup(data["html_date"]).span["title"], self.parameters),
+                time=format_date(get_soup(data["html_date"])["title"], self.parameters),
                 rating=data["icon_rating"],
             ))
     
