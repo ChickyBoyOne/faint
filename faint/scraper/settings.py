@@ -7,7 +7,7 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'faint'
+BOT_NAME = 'faint.scraper'
 
 SPIDER_MODULES = ['faint.scraper.spiders']
 NEWSPIDER_MODULE = 'faint.scraper.spiders'

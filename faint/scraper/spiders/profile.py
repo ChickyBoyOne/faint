@@ -10,13 +10,8 @@ from faint.scraper.spiders.utils import FA_BASE, format_date, get_direct_text, g
 from faint.scraper.items import Shout, Special, UserProfile
 
 
-class ProfileSpider(Spider):
-    name = "profile"
-
-    def start_requests(self):
-        yield Request(url=FA_BASE + f"/user/{self.parameters.username}/", callback=self.parse_profile, cookies=self.cookies)
-
-    def get_special(tag: SelectorList) -> Optional[Special]:
+class ProfileSpider:
+    def get_special(self, tag: SelectorList) -> Optional[Special]:
         if not (img := tag.css("img")):
             return None
         
@@ -33,9 +28,9 @@ class ProfileSpider(Spider):
         status = name_block.attrib["title"].split(": ")[-1].lower()
         special = self.get_special(name_block)
         fa_plus = special.id == "fa-plus" if special else False
-        title, _, joined = get_text(user_block.css("span.font-small")).strip().strip().rpartition(" | ")
+        title, _, joined = get_direct_text(user_block.css("span.font-small")).strip().rpartition(" | ")
         title = title if title else None
-        joined = format_date(joined.split(": ")[-1], self.settings)
+        joined = format_date(joined.split(": ")[-1], self.parameters)
         avatar = normalize_url(response.css("img.user-nav-avatar").attrib["src"])
 
         profile_block = response.css("div.userpage-profile")
@@ -63,6 +58,8 @@ class ProfileSpider(Spider):
                         username=get_direct_text(username),
                         special=self.get_special(username),
                         avatar=normalize_url(container.css("img.comment_useravatar").attrib["src"]),
-                        time=format_date(container.css("span.popup_date").attrib["title"], self.settings),
+                        time=format_date(container.css("span.popup_date").attrib["title"], self.parameters),
                         text=to_bbcode(container.css("div.comment_text")),
                     ))
+            
+        yield user

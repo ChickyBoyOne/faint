@@ -13,8 +13,10 @@ from .utils import FA_BASE
 from faint.utils import logger
 
 
-class SettingsSpider(Spider):
-    name = "settings"
+class UserSpider(
+    Spider, ProfileSpider,
+):
+    name = "user"
     
     def start_requests(self):
         yield Request(url=FA_BASE + f"/controls/settings/", callback=self.parse_settings, cookies=self.cookies)
@@ -59,18 +61,13 @@ class SettingsSpider(Spider):
         if not any([self.gallery, self.scraps, self.folders, self.favs]):
             self.profile = True
         
-        arguments = {
-            "cookies": self.cookies,
-            "parameters": Parameters(
-                username=self.username,
-                timezone=tz,
-                to_timezone=self.to_timezone,
-                after=after,
-                before=before,
-            ),
-        }
-        runner = CrawlerRunner()
+        self.parameters = Parameters(
+            username=self.username,
+            timezone=tz,
+            to_timezone=self.to_timezone,
+            after=after,
+            before=before,
+        )
+        
         if self.profile:
-            runner.crawl(ProfileSpider, **arguments)
-        d = runner.join()
-        d.addBoth(lambda _: reactor.stop())
+            yield Request(url=FA_BASE + f"/user/{self.parameters.username}/", callback=self.parse_profile)
