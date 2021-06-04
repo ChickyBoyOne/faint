@@ -1,20 +1,17 @@
 from unittest import TestCase
 
-from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from faint.scraper.spiders.bbcode import to_bbcode
+from faint.scraper.spiders.bbcode import BBCodeLocation, to_bbcode
 from faint.scraper.spiders.utils import get_soup
-
-START = ' ' * 16
-END = ' ' * 12
 
 def wrap(html: str) -> Tag:
     return get_soup(f'<div>{html}</div>')
 
 class BBCodeTestCase(TestCase):
-    def assert_wrapped(self, bbcode: str, html: str, msg: str):
-        self.assertEqual(bbcode, to_bbcode(wrap(html)), msg)
+    def assert_wrapped(self, bbcode: str, html: str, msg: str,
+            location: BBCodeLocation = BBCodeLocation.JOURNAL):
+        self.assertEqual(bbcode, to_bbcode(wrap(html), location), msg)
 
 class ConvertTagsTest(BBCodeTestCase):
     def test_b(self):
@@ -62,7 +59,13 @@ class ConvertTagsTest(BBCodeTestCase):
 
 class ConvertTextTest(BBCodeTestCase):
     def test_newline(self):
-        self.assert_wrapped('one \ntwo\nthree', '\n                one <br>\ntwo<br>\nthree            ', 'Newline fails to convert correctly')
+        self.assert_wrapped('one \ntwo\nthree', '\none <br>\ntwo<br>\nthree', 'Newline fails to convert correctly')
+    
+    def test_locations(self):
+        for location in BBCodeLocation:
+            start, end = location.value
+            name = location.name.lower()
+            self.assert_wrapped(name, f'{" " * start}{name}{" " * end}', f'Text with {name} padding fails to convert correctly')
 
     def test_horizontalLine(self):
         self.assert_wrapped('-----', '<hr class="bbcode bbcode_hr">', 'Horizontal line fails to convert correctly')
@@ -77,9 +80,9 @@ class ConvertTextTest(BBCodeTestCase):
         self.assert_wrapped('user@domain.com', '<a class="auto_link email" href="mailto:user@domain.com">user[at]domain.com</a>', 'Email fails to convert correctly')
     
     def test_symbols(self):
-        self.assert_wrapped('(c)', f'{START}©{END}', 'Copyright symbol fails to convert correctly')
-        self.assert_wrapped('(tm)', f'{START}™{END}', 'Trademark symbol fails to convert correctly')
-        self.assert_wrapped('(r)', f'{START}®{END}', 'Registered symbol fails to convert correctly')
+        self.assert_wrapped('(c)', '©', 'Copyright symbol fails to convert correctly')
+        self.assert_wrapped('(tm)', '™', 'Trademark symbol fails to convert correctly')
+        self.assert_wrapped('(r)', '®', 'Registered symbol fails to convert correctly')
     
     def test_userIconWithText(self):
         self.assert_wrapped(':iconFender:', '<a href="/user/fender" class="iconusername"><img src="//a.furaffinity.net/20210516/fender.gif" align="middle" title="Fender" alt="Fender">&nbsp;Fender</a>', 'User icon with text fails convert correctly')
