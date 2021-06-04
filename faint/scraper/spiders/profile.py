@@ -1,4 +1,5 @@
 from html import unescape
+from itertools import chain
 import json
 from typing import Any, Optional
 
@@ -7,7 +8,7 @@ from scrapy.selector.unified import SelectorList
 
 from faint.scraper.spiders.bbcode import BBCodeLocation, to_bbcode
 from faint.scraper.spiders.utils import cleave, format_date, get_direct_text, get_soup, get_text, normalize_url, not_class
-from faint.scraper.items import GallerySubmission, ProfileSubmission, Shinies, ShinyDonation, Shout, Special, Supporter, UserProfile, WatchInfo
+from faint.scraper.items import GallerySubmission, ProfileSubmission, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
 
 
 class ProfileSpider:
@@ -154,7 +155,9 @@ class ProfileSpider:
                     recent=self.get_user_list(body),
                 )
             elif label == "Stats":
-                pass
+                lines = chain.from_iterable(t.strip().splitlines() for t in body.css("div.cell::text").getall())
+                nums = [int(l.split(": ")[-1]) for l in lines]
+                user.stats = Stats(**{field: value for field, value in zip(Stats.__fields__.keys(), nums)})
             elif label == "Recent Journal":
                 pass
             elif label == "Badges":
