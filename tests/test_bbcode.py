@@ -131,7 +131,7 @@ class ConvertTextTest(BBCodeTestCase):
             self.assert_wrapped(bbcode, f'<i class="smilie {class_}"></i>', f'Smilie {bbcode} fails to convert correctly')
     
     def test_userIconWithText(self):
-        self.assert_wrapped(':iconFender:', '<a href="/user/fender" class="iconusername"><img src="//a.furaffinity.net/20210516/fender.gif" align="middle" title="Fender" alt="Fender">&nbsp;Fender</a>', 'User icon with text fails convert correctly')
+        self.assert_wrapped(':iconFender:', '<a href="/user/fender" class="iconusername"><img src="//a.furaffinity.net/20210516/fender.gif" align="middle" title="Fender" alt="Fender">&nbsp;Fender</a>', 'User icon with text fails to convert correctly')
 
     def test_userIconWithoutText(self):
         self.assert_wrapped(':Fendericon:', '<a href="/user/fender" class="iconusername"><img src="//a.furaffinity.net/20210516/fender.gif" align="middle" title="Fender" alt="Fender"></a>', 'User icon without text fails to convert correctly')
