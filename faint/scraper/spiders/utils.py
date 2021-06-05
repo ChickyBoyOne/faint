@@ -4,7 +4,7 @@ from urllib.parse import ParseResult, urlparse, urlunparse
 
 from bs4 import BeautifulSoup, Tag
 from dateparser import parse as parse_date
-from scrapy.selector.unified import SelectorList
+from scrapy.selector.unified import Selector, SelectorList
 
 from ..items import Parameters
 
@@ -41,8 +41,8 @@ def normalize_url(url: str) -> str:
         fragment=parsed.fragment,
     ))
 
-def not_class(tag: Union[SelectorList, Tag], bad: str) -> str:
-    if isinstance(tag, SelectorList):
+def not_class(tag: Union[Selector, SelectorList, Tag], bad: str) -> str:
+    if isinstance(tag, (Selector, SelectorList)):
         classes = tag.attrib.get("class", "").split(" ")
     else:
         classes = tag["class"]

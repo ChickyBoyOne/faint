@@ -8,7 +8,7 @@ from scrapy.selector.unified import SelectorList
 
 from faint.scraper.spiders.bbcode import BBCodeLocation, to_bbcode
 from faint.scraper.spiders.utils import cleave, format_date, get_direct_text, get_soup, get_text, normalize_url, not_class
-from faint.scraper.items import GallerySubmission, JournalType, ProfileJournal, ProfileSubmission, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
+from faint.scraper.items import Badge, GallerySubmission, JournalType, ProfileJournal, ProfileSubmission, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
 
 
 class ProfileSpider:
@@ -170,7 +170,14 @@ class ProfileSpider:
                     text=to_bbcode(body.css("div.user-submitted-links"), BBCodeLocation.PROFILE_JOURNAL),
                 )
             elif label == "Badges":
-                pass
+                for badge in body.css("div.badge"):
+                    img = badge.css("img")
+                    user.badges.append(Badge(
+                        id=cleave(badge.attrib["id"]),
+                        name=not_class(badge, "badge"),
+                        img=normalize_url(img.attrib["src"]),
+                        title=img.attrib["title"],
+                    ))
             elif label == "User Profile":
                 pass
             
