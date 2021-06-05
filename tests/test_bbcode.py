@@ -62,15 +62,36 @@ class ConvertTextTest(BBCodeTestCase):
         self.assert_wrapped('one \ntwo\nthree', '\none <br>\ntwo<br>\nthree', 'Newline fails to convert correctly')
     
     def test_locations(self):
-        for location in BBCodeLocation:
-            start, end = location.value
-            name = location.name.lower()
-            self.assert_wrapped(
-                name,
-                f'{" " * start}{name}{" " * end}',
-                f'Text with {name} padding fails to convert correctly',
-                location=location,
-            )
+        self.assert_wrapped(
+            'profile',
+            '\n                profile            ',
+            'BBCode with profile padding fails to convert correctly',
+            location=BBCodeLocation.PROFILE,
+        )
+        self.assert_wrapped(
+            'profile journal',
+            '\n                \n                profile journal\n                            ',
+            'BBCode with profile journal padding fails to convert correctly',
+            location=BBCodeLocation.PROFILE_JOURNAL,
+        )
+        self.assert_wrapped(
+            'comment',
+            '\n            comment        ',
+            'BBCode with comment padding fails to convert correctly',
+            location=BBCodeLocation.COMMENT,
+        )
+        self.assert_wrapped(
+            'submission',
+            '\n                    submission\n                                    ',
+            'BBCode with submission padding fails to convert correctly',
+            location=BBCodeLocation.SUBMISSION,
+        )
+        self.assert_wrapped(
+            'journal',
+            'journal',
+            'BBCode with journal padding fails to convert correctly',
+            location=BBCodeLocation.JOURNAL,
+        )
 
     def test_horizontalLine(self):
         self.assert_wrapped('-----', '<hr class="bbcode bbcode_hr">', 'Horizontal line fails to convert correctly')
