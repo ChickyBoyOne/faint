@@ -10,6 +10,7 @@ from .utils import get_soup, not_class
 class BBCodeLocation(Enum):
     PROFILE = (16, 12)
     PROFILE_JOURNAL = (32, 28)
+    ANSWER = (40, 36)
     COMMENT = (12, 8)
     SUBMISSION = (20, 36)
     JOURNAL = (0, 0)

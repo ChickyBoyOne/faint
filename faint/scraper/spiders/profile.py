@@ -8,7 +8,7 @@ from scrapy.selector.unified import SelectorList
 
 from faint.scraper.spiders.bbcode import BBCodeLocation, to_bbcode
 from faint.scraper.spiders.utils import cleave, format_date, get_direct_text, get_soup, get_text, normalize_url, not_class
-from faint.scraper.items import Badge, GallerySubmission, JournalType, ProfileJournal, ProfileSubmission, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
+from faint.scraper.items import Badge, Contact, GallerySubmission, JournalType, ProfileJournal, ProfileSubmission, Question, Rating, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
 
 
 class ProfileSpider:
@@ -179,6 +179,41 @@ class ProfileSpider:
                         title=img.attrib["title"],
                     ))
             elif label == "User Profile":
-                pass
+                info = user.info
+
+                if (submission := section.css("div.section-submission")):
+                    url = submission.css("a::attr(href)").get()
+                    info.submission = ProfileSubmission(
+                        id=url.split("/")[-2],
+                        url=normalize_url(url),
+                        img=normalize_url(submission.css("img::attr(src)").get()),
+                        # Profile IDs must be of general rating: https://forums.furaffinity.net/threads/furaffinity-profile-id-photo-disabled.1623882/post-5664357
+                        rating=Rating.GENERAL,
+                    )
+                
+                rows = section.css("div.table-row")
+                info.trades, info.commissions = [get_direct_text(row) == "Yes" for row in rows[:2]]
+                for row in rows[2:]:
+                    print("".join(str(tag) for tag in get_soup(row.get()).contents[3:]))
+                    info.questions.append(Question(
+                        question=row.css("strong::text").get(),
+                        answer=to_bbcode(get_soup(f"<div>{''.join(str(tag) for tag in get_soup(row.get()).contents[3:])}</div>"), BBCodeLocation.ANSWER),
+                    ))
+                
+                if (contacts := section.css("div.user-contact")):
+                    for item in contacts.css("div.user-contact-item"):
+                        site = cleave(item.css("div.user-contact-seperator div::attr(class)").get().split()[0])
+                        if (a := item.css("a")):
+                            info.contacts.append(Contact(
+                                site=site,
+                                id=get_direct_text(a),
+                                url=a.attrib["href"],
+                            ))
+                        else:
+                            info.contacts.append(Contact(
+                                site=site,
+                                id=get_direct_text(item.css("div.user-contact-user-info")),
+                                url=None,
+                            ))
             
         yield user

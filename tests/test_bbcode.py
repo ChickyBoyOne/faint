@@ -144,6 +144,12 @@ class ConvertTextTest(BBCodeTestCase):
             location=BBCodeLocation.PROFILE_JOURNAL,
         )
         self.assert_wrapped(
+            'answer',
+            '\n                                        answer                                    ',
+            'BBCode with answer padding',
+            location=BBCodeLocation.ANSWER,
+        )
+        self.assert_wrapped(
             'comment',
             '\n            comment        ',
             'BBCode with comment padding',
