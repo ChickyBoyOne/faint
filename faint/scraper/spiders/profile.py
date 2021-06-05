@@ -8,7 +8,7 @@ from scrapy.selector.unified import SelectorList
 
 from faint.scraper.spiders.bbcode import BBCodeLocation, to_bbcode
 from faint.scraper.spiders.utils import cleave, format_date, get_direct_text, get_soup, get_text, normalize_url, not_class
-from faint.scraper.items import GallerySubmission, ProfileSubmission, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
+from faint.scraper.items import GallerySubmission, JournalType, ProfileJournal, ProfileSubmission, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
 
 
 class ProfileSpider:
@@ -158,8 +158,17 @@ class ProfileSpider:
                 lines = chain.from_iterable(t.strip().splitlines() for t in body.css("div.cell::text").getall())
                 nums = [int(l.split(": ")[-1]) for l in lines]
                 user.stats = Stats(**{field: value for field, value in zip(Stats.__fields__.keys(), nums)})
-            elif label == "Recent Journal":
-                pass
+            elif label in ["Recent Journal", "Featured Journal"]:
+                href = header.css("a::attr(href)").get()
+                user.journal = ProfileJournal(
+                    id=href.split("/")[-1],
+                    type=JournalType(label.split()[0].lower()),
+                    url=normalize_url(href),
+                    comments=self.get_subtitle_num(header),
+                    title=body.css("h2::text").get(),
+                    time=format_date(body.css("span.popup_date::attr(title)").get(), self.parameters),
+                    text=to_bbcode(body.css("div.user-submitted-links"), BBCodeLocation.PROFILE_JOURNAL),
+                )
             elif label == "Badges":
                 pass
             elif label == "User Profile":

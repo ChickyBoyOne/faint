@@ -71,8 +71,13 @@ class Stats(BaseModel):
     comments_made: int
     journals: int
 
+class JournalType(Enum):
+    RECENT = "recent"
+    FEATURED = "featured"
+
 class ProfileJournal(BaseModel):
     id: int
+    type: JournalType
     url: HttpUrl
     comments: int
     title: str
