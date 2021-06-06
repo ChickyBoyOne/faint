@@ -148,12 +148,12 @@ class FolderGroup(BaseModel):
     folders: list[Folder] = []
 
 class Favorite(BaseModel):
-    sid: int
-    rating: Rating
-    username: str
     id: int
     time: datetime
+    sid: int
     url: HttpUrl
+    username: str
+    rating: Rating
 
 class User(BaseModel):
     profile: Optional[UserProfile]

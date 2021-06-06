@@ -4,17 +4,16 @@ from faint.scraper.items import Parameters
 from dateparser import parse as parse_date
 from pytz.exceptions import UnknownTimeZoneError
 from scrapy import Request, Spider
-from scrapy.crawler import CrawlerRunner
 from scrapy.http.response.html import HtmlResponse
-from twisted.internet import reactor
 
+from .favs import FavsSpider
 from .profile import ProfileSpider
 from .utils import FA_BASE
 from faint.utils import logger
 
 
 class UserSpider(
-    Spider, ProfileSpider,
+    Spider, ProfileSpider, FavsSpider,
 ):
     name = "user"
     
@@ -71,3 +70,5 @@ class UserSpider(
         
         if self.profile:
             yield Request(url=FA_BASE + f"/user/{self.parameters.username}/", callback=self.parse_profile)
+        if self.favs:
+            yield Request(url=FA_BASE + f"/favorites/{self.parameters.username}/", callback=self.parse_favs)
