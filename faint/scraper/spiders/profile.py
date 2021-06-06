@@ -6,9 +6,9 @@ from typing import Any, Optional
 from scrapy.http.response.html import HtmlResponse
 from scrapy.selector.unified import SelectorList
 
-from faint.scraper.spiders.bbcode import BBCodeLocation, to_bbcode
-from faint.scraper.spiders.utils import cleave, format_date, get_direct_text, get_soup, get_text, normalize_url, not_class
-from faint.scraper.items import Badge, Contact, GallerySubmission, JournalType, ProfileJournal, ProfileSubmission, Question, Rating, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
+from .bbcode import BBCodeLocation, to_bbcode
+from .utils import cleave, format_date, get_direct_text, get_soup, get_text, normalize_url, not_class
+from ..items import Badge, Contact, GallerySubmission, JournalType, ProfileJournal, ProfileSubmission, Question, Rating, Shinies, ShinyDonation, Shout, Special, Stats, Supporter, UserProfile, WatchInfo
 
 
 class ProfileSpider:
